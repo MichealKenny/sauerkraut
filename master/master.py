@@ -1,4 +1,4 @@
-from bottle import route, run, static_file, request, response, redirect
+from bottle import route, run, static_file, request, response, redirect, template
 from requests import get, exceptions
 
 
@@ -36,7 +36,8 @@ def index():
     if request.get_cookie('auth', secret='admin') != 'admin':
         redirect('/login')
 
-    page = '<img src="images/header.png">'
+    page = ''
+    html = open('html/server_list.html', 'r').read()
 
     for server in server_db:
         try:
@@ -54,7 +55,7 @@ def index():
         except exceptions.ConnectionError:
             page += '<h3><a href="server/{name}">{name}</a> <img src="images/red.png" title="Server down"></h3>'.format(name=server['name'])
 
-    return page + '<a href="/logout">Logout</a>'
+    return template(html, body=page)
 
 @route('/server/<name>')
 def server(name):
