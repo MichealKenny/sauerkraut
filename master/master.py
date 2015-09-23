@@ -85,7 +85,7 @@ def add_server():
 
         redirect('/')
 
-    except:
+    except exceptions.ConnectionError:
         redirect('/add?q=invalid')
 
 @route('/server/<name>')
