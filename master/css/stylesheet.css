@@ -1,0 +1,16 @@
+.header {
+    position: absolute;
+    top: 10px;
+    border-bottom: 2px solid;
+    border-bottom-color: black;
+}
+
+.sidebar {
+    position: absolute;
+    left: 20px;
+}
+
+.body {
+    position: absolute;
+    top: 30%;
+}

@@ -3,11 +3,55 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>Sauerkraut - Server List</title>
+    <link rel="stylesheet" type="text/css" href="css/stylesheet.css" />
+    <style>
+        body {
+            float: left;
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+
+        }
+        .header {
+            position: absolute;
+            top: 2px;
+            left: 0%;
+            right: 0%;
+            border-bottom: 2px solid;
+            border-bottom-color: black;
+        }
+
+        .sidebar {
+            position: absolute;
+            top: 40px;
+            bottom: 0%;
+            left: 0%;
+            right: 80%;
+            border-right: 2px solid;
+            border-right-color: black;
+        }
+
+        .body {
+            position: absolute;
+            top: 10%;
+            left: 30%;
+        }
+    </style>
 </head>
 <body>
-<img src="images/header.png">
-{{!body}}
-<a href="/add">Add Server</a><br/>
-<a href="/logout">Logout</a>
+    <div class="header">
+        <img src="images/header.png" height="32px">
+        <a href="/logout" style="position: absolute; right: 5px;">Logout</a>
+    </div>
+    <div class="sidebar" align="center">
+        <br />
+        <p><a href="/">List Servers</a></p>
+        <p><a href="/add">Add Server</a></p>
+        <p><a href="/configure">Quick Config</a></p>
+        <p><a href="/custom">Custom Config</a></p>
+
+    </div>
+    <div class="body">
+        <h3>List of Servers</h3>
+        {{!body}}
+    </div>
 </body>
 </html>

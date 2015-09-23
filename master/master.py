@@ -46,7 +46,7 @@ def index():
 
     for server in server_db:
         try:
-            health = get('http://{host}:{port}/status'.format(host=server['host'], port=server['port']), timeout=0.1).json()
+            health = get('http://{host}:{port}/status'.format(host=server['host'], port=server['port']), timeout=0.01).json()
             cpu = health['cpu']
             ram = health['ram']
 
@@ -90,7 +90,14 @@ def add_server():
 
 @route('/server/<name>')
 def server(name):
-    return 'Coming soon.'
+    for server in server_db:
+        if server['name'] == name:
+            health = get('http://{host}:{port}/status'.format(host=server['host'], port=server['port']), timeout=0.1).json()
+            cpu = health['cpu']
+            ram = health['ram']
+
+    html = open('html/server.html', 'r').read()
+    return template(html, {'name': name, 'cpu': cpu, 'ram': ram})
 
 @route('/images/<name>')
 def images(name):
