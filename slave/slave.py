@@ -13,7 +13,7 @@ def status():
 
     return {'cpu': cpu, 'ram': ram}
 
-#run(host='localhost', port=29547)
+run(host='localhost', port=29547)
 #run(host='localhost', port=29548)
 #run(host='localhost', port=29549)
-run(host='localhost', port=29550)
+#run(host='localhost', port=29550)
