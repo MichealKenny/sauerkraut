@@ -13,7 +13,12 @@ def login():
     if request.get_cookie('auth', secret='admin') == 'admin':
         redirect('/')
 
-    return open('html/login.html', 'r').read()
+    if request.query.q == 'invalid':
+        message = '<font color="red">Invalid Login</font><br/>'
+    else:
+        message = ''
+
+    return message + open('html/login.html', 'r').read()
 
 @route('/logout')
 def login():
@@ -28,7 +33,7 @@ def auth():
         response.set_cookie('auth', 'admin', secret='admin', max_age=1000)
         redirect('/')
     else:
-        redirect('/login')
+        redirect('/login?q=invalid')
 
 
 @route('/')
@@ -37,7 +42,7 @@ def index():
         redirect('/login')
 
     page = ''
-    html = open('html/server_list.html', 'r').read()
+    html = open('html/list.html', 'r').read()
 
     for server in server_db:
         try:
@@ -56,6 +61,32 @@ def index():
             page += '<h3><a href="server/{name}">{name}</a> <img src="images/red.png" title="Server down"></h3>'.format(name=server['name'])
 
     return template(html, body=page)
+
+@route('/add')
+def add_page():
+    if request.query.q == 'invalid':
+        message = '<font color="red">Invalid Server</font><br/>'
+    else:
+        message = ''
+
+    return message + open('html/add.html', 'r').read()
+
+@route('/add', method='POST')
+def add_server():
+    name = request.forms.get('name')
+    host = request.forms.get('host')
+    port = request.forms.get('port')
+
+    try:
+        get('http://{host}:{port}/status'.format(host=host, port=port), timeout=1)
+
+        new_server = {'name': name, 'host': host, 'port': port}
+        server_db.append(new_server)
+
+        redirect('/')
+
+    except:
+        redirect('/add?q=invalid')
 
 @route('/server/<name>')
 def server(name):
