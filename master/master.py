@@ -23,7 +23,7 @@ def login():
 @route('/logout')
 def login():
     response.set_cookie('auth', '', secret='admin', expires=0)
-    redirect('/')
+    redirect('/login')
 
 @route('/auth', method='POST')
 def auth():
