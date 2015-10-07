@@ -114,6 +114,16 @@ def add_server():
 
     redirect('/')
 
+@route('/remove')
+def remove_server():
+    if not authorized():
+        redirect('/login')
+
+    db.execute("DELETE FROM servers WHERE name = '{0}'".format(request.query.server))
+    master_db.commit()
+
+    redirect('/')
+
 
 @route('/server/<name>')
 def server(name):
