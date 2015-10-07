@@ -1,11 +1,11 @@
 from bottle import route, run, static_file, request, response, redirect, template
 from requests import get, exceptions
-import hashlib, uuid
+import hashlib
 import sqlite3
 
 
 #Connect to database
-master_db = sqlite3.connect('master.db')
+master_db = sqlite3.connect('master.db', check_same_thread=False)
 db = master_db.cursor()
 
 
@@ -41,7 +41,11 @@ def auth():
     password = request.forms.get('password')
 
     #Get data from db.
-    entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username)).fetchall()[0]
+    try:
+        entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username)).fetchall()[0]
+
+    except IndexError:
+        redirect('/login?q=invalid')
 
     if hashlib.sha512((password + entry[2]).encode('utf-8')).hexdigest() == entry[1]:
         response.set_cookie('auth', 'cabbage', secret=secret, max_age=1000)
@@ -72,7 +76,7 @@ def index():
 
             page += '<h3><a href="server/{name}">{name}</a> <img src="images/{icon}" title="CPU: {cpu}%, RAM: {ram}%"></h3>'.format(name=server[0], cpu=str(cpu), ram=str(ram), icon=icon)
 
-        except exceptions.ConnectionError:
+        except (exceptions.ConnectionError, ValueError):
             page += '<h3><a href="server/{name}">{name}</a> <img src="images/red.png" title="Server down"></h3>'.format(name=server[0])
 
     return template(html, body=page)
@@ -99,21 +103,23 @@ def add_server():
     port = request.forms.get('port')
 
     try:
-        get('http://{host}:{port}/status'.format(host=host, port=port), timeout=1)
+        get('http://{host}:{port}/status'.format(host=host, port=port))
 
-        #Add server to database.
-        db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
-        master_db.commit()
-
-        redirect('/')
-
-    except exceptions.ConnectionError:
+    except:
         redirect('/add?q=invalid')
+
+    #Add server to database.
+    db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
+    master_db.commit()
+
+    redirect('/')
+
 
 @route('/server/<name>')
 def server(name):
     if not authorized():
         redirect('/login')
+
 
     entry = db.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()[0]
 
@@ -122,18 +128,20 @@ def server(name):
         cpu = health['cpu']
         ram = health['ram']
 
+
         html = open('html/server.html', 'r').read()
         return template(html, {'name': name, 'cpu': cpu, 'ram': ram})
 
     except exceptions.ConnectTimeout:
         return 'Server down.'
 
+
 @route('/images/<name>')
 def images(name):
     return static_file(name, root='images/')
 
 @route('/css/<name>')
-def images(name):
+def css(name):
     return static_file(name, root='css/')
 
 run(host='localhost', port=8883)
