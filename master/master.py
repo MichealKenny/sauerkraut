@@ -74,10 +74,10 @@ def index():
             else:
                 icon = 'green.png'
 
-            page += '<h3><a href="server/{name}">{name}</a> <img src="images/{icon}" title="CPU: {cpu}%, RAM: {ram}%"><a href="remove?server={name}">X</a></h3>'.format(name=server[0], cpu=str(cpu), ram=str(ram), icon=icon)
+            page += '<h3><a href="server/{name}">{name}</a> <img src="images/{icon}" title="CPU: {cpu}%, RAM: {ram}%">&nbsp;<a href="remove?server={name}">X</a></h3>'.format(name=server[0], cpu=str(cpu), ram=str(ram), icon=icon)
 
         except (exceptions.ConnectionError, ValueError):
-            page += '<h3><a href="server/{name}">{name}</a> <img src="images/red.png" title="Server down"><a href="remove?server={name}">X</a></h3>'.format(name=server[0])
+            page += '<h3><a href="server/{name}">{name}</a> <img src="images/red.png" title="Server down">&nbsp;<a href="remove?server={name}">X</a></h3>'.format(name=server[0])
 
     return template(html, body=page)
 
