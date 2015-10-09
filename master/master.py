@@ -1,21 +1,54 @@
 from bottle import route, run, static_file, request, response, redirect, template
 from requests import get, exceptions
-import hashlib
+import hashlib, uuid
 import sqlite3
+import json
 
 
 #Connect to database
 master_db = sqlite3.connect('master.db', check_same_thread=False)
 db = master_db.cursor()
 
+#Cookie variables
+secret = '05d1ce01dc52e88bf61286994837c82c8fa5089e'
+key = 'cabbage'
+
 
 def authorized():
-    secret = '05d1ce01dc52e88bf61286994837c82c8fa5089e'
-    if request.get_cookie('auth', secret=secret) == 'cabbage':
+    cookie = request.get_cookie('sauerkraut', secret=secret)
+
+    if cookie:
+        sk = json.loads(cookie)
+        if sk['key'] == key:
+            return True
+
+        else:
+            return False
+
+    else:
+        return False
+
+def admin():
+    entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username())).fetchall()[0]
+
+    if entry[3] == 'admin':
         return True
 
     else:
         return False
+
+def username():
+    sk = json.loads(request.get_cookie('sauerkraut', secret=secret))
+
+    return sk['username']
+
+
+def create_hash(password, salt=uuid.uuid4().hex):
+
+    hash_pass = hashlib.sha512((password + salt).encode('utf-8')).hexdigest()
+
+    return hash_pass, salt
+
 
 @route('/login')
 def login():
@@ -29,14 +62,15 @@ def login():
 
     return message + open('html/login.html', 'r').read()
 
+
 @route('/logout')
 def logout():
-    response.set_cookie('auth', '', secret='admin', expires=0)
+    response.set_cookie('sauerkraut', '', secret=secret, expires=0)
     redirect('/login')
+
 
 @route('/auth', method='POST')
 def auth():
-    secret = '05d1ce01dc52e88bf61286994837c82c8fa5089e'
     username = request.forms.get('username')
     password = request.forms.get('password')
 
@@ -47,9 +81,15 @@ def auth():
     except IndexError:
         redirect('/login?q=invalid')
 
-    if hashlib.sha512((password + entry[2]).encode('utf-8')).hexdigest() == entry[1]:
-        response.set_cookie('auth', 'cabbage', secret=secret, max_age=1000)
-        redirect('/')
+    if create_hash(password, entry[2])[0] == entry[1]:
+        data = json.dumps({'username': username, 'key': key})
+        response.set_cookie(name='sauerkraut', value=data, secret=secret, max_age=1000)
+
+        if password == 'admin':
+            redirect('/manage/change-password')
+            
+        else:
+            redirect('/')
 
     else:
         redirect('/login?q=invalid')
@@ -81,10 +121,14 @@ def index():
 
     return template(html, body=page)
 
+
 @route('/add')
 def add_page():
     if not authorized():
         redirect('/login')
+
+    if not admin():
+        redirect('/denied')
 
     if request.query.q == 'invalid':
         message = '<font color="red">Invalid Server</font><br/>'
@@ -93,10 +137,14 @@ def add_page():
 
     return message + open('html/add.html', 'r').read()
 
+
 @route('/add', method='POST')
 def add_server():
     if not authorized():
         redirect('/login')
+
+    if not admin():
+        redirect('/denied')
 
     name = request.forms.get('name')
     host = request.forms.get('host')
@@ -114,10 +162,14 @@ def add_server():
 
     redirect('/')
 
+
 @route('/remove')
 def remove_server():
     if not authorized():
         redirect('/login')
+
+    if not admin():
+        redirect('/denied')
 
     db.execute("DELETE FROM servers WHERE name = '{0}'".format(request.query.server))
     master_db.commit()
@@ -144,6 +196,67 @@ def server(name):
 
     except exceptions.ConnectTimeout:
         return 'Server down.'
+
+
+@route('/manage/change-password')
+def change_password_page():
+    if not authorized():
+        redirect('/login')
+
+    return template(open('html/change-password.html', 'r').read(), username=username())
+
+@route('/manage/change-password', method='POST')
+def change_password():
+    if not authorized():
+        redirect('/login')
+
+    old_pass = request.forms.get('old-password')
+    new_pass = request.forms.get('new-password')
+    new_pass_confirm = request.forms.get('new-password-confirm')
+
+    if new_pass == new_pass_confirm:
+        entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username())).fetchall()[0]
+        if create_hash(old_pass, entry[2])[0] == entry[1]:
+            new_hash, new_salt = create_hash(new_pass)
+
+            db.execute("UPDATE accounts SET hash='{0}', salt='{1}' WHERE username='{2}'".format(new_hash, new_salt, username()))
+            master_db.commit()
+
+            redirect('/logout')
+
+        else:
+            redirect('/manage/change-password?q=invalid-old-pass')
+
+    else:
+        redirect('/manage/change-password?q=invalid-new-pass')
+
+
+@route('/manage/new-user')
+def new_user_page():
+    if not authorized():
+        redirect('/login')
+
+    return open('html/new-user.html', 'r').read()
+
+
+@route('/manage/new-user', method='POST')
+def new_user():
+    if not authorized():
+        redirect('/login')
+
+    username = request.forms.get('username')
+    password = request.forms.get('password')
+    password_confirm = request.forms.get('password-confirm')
+    perms = request.forms.get('perms')
+    if password == password_confirm:
+        hash, salt = create_hash(password)
+        db.execute("INSERT INTO accounts VALUES ('{0}', '{1}', '{2}', '{3}')".format(username, hash, salt, perms))
+        master_db.commit()
+
+
+@route('/denied')
+def denied():
+    return 'You lack the required permission to perform this action'
 
 
 @route('/images/<name>')
