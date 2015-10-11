@@ -9,7 +9,7 @@ body {
     left: 0%;
     right: 0%;
     border-bottom: 2px solid;
-    border-bottom-color: black;
+    border-bottom-color: #efefef;
 }
 
 .sidebar {
@@ -19,7 +19,7 @@ body {
     left: 0;
     width: 150px;
     border-right: 2px solid;
-    border-right-color: black;
+    border-right-color: #efefef;
     overflow-y: auto;
 }
 
@@ -31,6 +31,23 @@ body {
     bottom: 0;
     overflow-y: auto;
 }
+.login {
+    position: absolute;
+    margin: -100px 0 0 -260px;
+    top: 25%;
+    left: 50.5%;
+    height: 200px;
+    width: 450px;
+    border: 2px solid;
+    border-color: #efefef;
+}
+
+td {
+    padding: 4px;
+    border: 1px #efefef solid;
+    width: 80px;
+}
+
 a:link {
     color: #000000;
     text-decoration: none;

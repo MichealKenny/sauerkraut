@@ -114,12 +114,12 @@ def index():
             else:
                 icon = 'green.png'
 
-            page += '<h3><a href="server/{name}">{name}</a> <img src="images/{icon}" title="CPU: {cpu}%, RAM: {ram}%">&nbsp;<a href="remove?server={name}">X</a></h3>'.format(name=server[0], cpu=str(cpu), ram=str(ram), icon=icon)
+            page += '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}%</td><td><img src="images/{icon}"></td><td><a href="remove?server={name}">X</a></td></tr>'.format(name=server[0], host=server[1], port=server[2], cpu=str(cpu), ram=str(ram), icon=icon)
 
-        except (exceptions.ConnectionError, ValueError):
-            page += '<h3><a href="server/{name}">{name}</a> <img src="images/red.png" title="Server down">&nbsp;<a href="remove?server={name}">X</a></h3>'.format(name=server[0])
+        except (exceptions.RequestException, ValueError):
+            page += '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A</td><td><img src="images/red.png"></td><td><a href="remove?server={name}">X</a></td></tr>'.format(name=server[0], host=server[1], port=server[2])
 
-    return template(html, body=page)
+    return template(html, body=page, username=username())
 
 
 @route('/add')
@@ -194,7 +194,7 @@ def server(name):
         html = open('html/server.html', 'r').read()
         return template(html, {'name': name, 'cpu': cpu, 'ram': ram})
 
-    except exceptions.ConnectTimeout:
+    except exceptions.RequestException:
         return 'Server down.'
 
 
@@ -236,6 +236,9 @@ def new_user_page():
     if not authorized():
         redirect('/login')
 
+    if not admin():
+        redirect('/denied')
+
     return open('html/new-user.html', 'r').read()
 
 
@@ -243,6 +246,9 @@ def new_user_page():
 def new_user():
     if not authorized():
         redirect('/login')
+
+    if not admin():
+        redirect('/denied')
 
     username = request.forms.get('username')
     password = request.forms.get('password')
@@ -252,6 +258,11 @@ def new_user():
         hash, salt = create_hash(password)
         db.execute("INSERT INTO accounts VALUES ('{0}', '{1}', '{2}', '{3}')".format(username, hash, salt, perms))
         master_db.commit()
+
+        redirect('/')
+
+    else:
+        redirect('/manage/new-user?q=pass-invalid')
 
 
 @route('/denied')
@@ -263,8 +274,15 @@ def denied():
 def images(name):
     return static_file(name, root='images/')
 
+
 @route('/css/<name>')
 def css(name):
     return static_file(name, root='css/', mimetype='text/css')
+
+
+@route('/js/<name>')
+def js(name):
+    return static_file(name, root='js/', mimetype='text/javascript')
+
 
 run(host='localhost', port=8883)

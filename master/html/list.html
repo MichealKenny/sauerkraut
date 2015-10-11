@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <title>Sauerkraut - Server List</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/chart.js"></script>
 </head>
 <body>
     <div class="header">
         <img src="images/header.png" width="150px">
-        <a href="/logout" style="position: absolute; right: 5px;">Logout</a>
+        <p href="/logout" style="position: absolute; right: 15px; top: -13px; font-size: 12px;">Welcome, {{username}}.</p>
+        <p href="/logout" style="position: absolute; right: 57px; top: 1px; font-size: 12px;">|</p>
+        <a href="/logout" style="position: absolute; right: 15px; top: 14px; font-size: 12px;">Logout</a>
+        <a href="/manage" style="position: absolute; right: 65px; top: 14px; font-size: 12px;">Manage</a>
     </div>
     <div class="sidebar" align="center">
         <br />
@@ -20,7 +25,23 @@
     </div>
     <div class="body">
         <h3>List of Servers</h3>
-        {{!body}}
+        <input type="text" id="search" style="width: 794px;" placeholder="Filter Servers">
+        <table id="table" style="width:800px;text-align: center;">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>CPU</th>
+                <th>RAM</th>
+                <th>Status</th>
+                <th>Remove</th>
+            </tr>
+            </thead>
+            <tbody>
+                {{!body}}
+            </tbody>
+        </table>
     </div>
 </body>
+<script type="text/javascript" src="/js/filter.js"></script>
 </html>
