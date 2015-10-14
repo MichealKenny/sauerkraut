@@ -3,15 +3,7 @@ from requests import get, exceptions
 import hashlib, uuid
 import sqlite3
 import json
-
-
-#Connect to database
-master_db = sqlite3.connect('master.db', check_same_thread=False)
-db = master_db.cursor()
-
-#Cookie variables
-secret = '05d1ce01dc52e88bf61286994837c82c8fa5089e'
-key = 'cabbage'
+import os
 
 
 def authorized():
@@ -285,4 +277,46 @@ def js(name):
     return static_file(name, root='js/', mimetype='text/javascript')
 
 
-run(host='localhost', port=8883)
+if __name__ == '__main__':
+    print('Sauerkraut - Cluster Administration Tool')
+    if not os.path.isfile('config.json'):
+        print('========================================\n\nFresh Install, Please fill in the following details:\n')
+
+        config = json.dumps({'secret': '05d1ce01dc52e88bf61286994837c82c8fa5089e', 'key': 'cabbage',
+                             'host': input('Host: '), 'port': int(input('Port: '))}, indent=4)
+
+        config_file = open('config.json', 'w+')
+        config_file.write(config)
+        config_file.close()
+
+        print('\nCreated configuration file, it can be changed at any time.')
+
+    if not os.path.isfile('master.db'):
+        #Connect to database
+        master_db = sqlite3.connect('master.db', check_same_thread=False)
+        db = master_db.cursor()
+
+        db.execute("CREATE TABLE servers (name text, host text, port text)")
+        db.execute("CREATE TABLE accounts (username text, hash text, salt text, perms text)")
+        db.execute("INSERT INTO accounts VALUES ('admin','33ff7d10cd1f5bc60c0d5d0a331f39a1c4ad98ed5bc2e357f291700197"
+                                                         "c38734f3da4e9a7bf421b4cad90fcb5a3c38171493f306af24c8acc733"
+                                                         "20c3339e09aa','230f3cbd511a4ac79dff00a998dd6641', 'admin')")
+        master_db.commit()
+        master_db.close()
+
+        print('Created database, default login is admin:admin')
+
+    #Connect to database
+    master_db = sqlite3.connect('master.db', check_same_thread=False)
+    db = master_db.cursor()
+
+    config_file = open('config.json', 'r')
+    config = json.loads(config_file.read())
+    config_file.close()
+
+    secret = config['secret']
+    key = config['key']
+    host = config['host']
+    port = config['port']
+
+    run(host=host, port=port)

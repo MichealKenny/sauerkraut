@@ -1,10 +1,10 @@
 from bottle import route, run, request
 import psutil
+import json
+import os
 
 
 def authorized():
-    master_ip = '127.0.0.1'
-
     if request.remote_addr == master_ip:
         return True
 
@@ -43,7 +43,26 @@ def extended():
     else:
         return {'error': 'Not Authorized'}
 
-run(host='localhost', port=29547)
-#run(host='localhost', port=29548)
-#run(host='localhost', port=29549)
-#run(host='localhost', port=29550)
+if __name__ == '__main__':
+    print('Sauerkraut Slave')
+    if not os.path.isfile('config.json'):
+        print('========================================\n\nFresh Install, Please fill in the following details:\n')
+
+        config = json.dumps({'host': input('Host: '), 'port': int(input('Port: ')),
+                             'master_ip': input('Host of Master: ')}, indent=4)
+
+        config_file = open('config.json', 'w+')
+        config_file.write(config)
+        config_file.close()
+
+        print('\nCreated configuration file, it can be changed at any time.')
+
+    config_file = open('config.json', 'r')
+    config = json.loads(config_file.read())
+    config_file.close()
+
+    master_ip = config['master_ip']
+    host = config['host']
+    port = config['port']
+
+    run(host=host, port=port)
