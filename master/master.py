@@ -1,4 +1,5 @@
 from bottle import route, run, static_file, request, response, redirect, template
+from multiprocessing.dummy import Pool
 from requests import get, exceptions
 import hashlib, uuid
 import sqlite3
@@ -40,6 +41,40 @@ def create_hash(password, salt=uuid.uuid4().hex):
     hash_pass = hashlib.sha512((password + salt).encode('utf-8')).hexdigest()
 
     return hash_pass, salt
+
+
+def get_server_status(server):
+    try:
+        health = get('http://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.01).json()
+        print(health)
+        cpu = health['cpu']
+        ram = health['ram']
+
+        if cpu > 85 or ram > 85:
+            icon = 'yellow.png'
+        else:
+            icon = 'green.png'
+
+        row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}' \
+              '%</td><td><img src="images/{icon}"></td><td><a href="remove?server={name}">X</a></td></tr>'\
+            .format(name=server[0], host=server[1], port=server[2], cpu=str(cpu), ram=str(ram), icon=icon)
+
+        return row
+
+    except (exceptions.RequestException, ValueError):
+        row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
+              '</td><td><img src="images/red.png"></td><td><a href="remove?server={name}">X</a></td></tr>'\
+            .format(name=server[0], host=server[1], port=server[2])
+
+        return row
+
+    except KeyError:
+        row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
+              '</td><td>Not Auth</td><td><a href="remove?server={name}">X</a></td></tr>'\
+            .format(name=server[0], host=server[1], port=server[2])
+
+        return row
+
 
 
 @route('/login')
@@ -92,26 +127,14 @@ def index():
     if not authorized():
         redirect('/login')
 
-    page = ''
     html = open('html/list.html', 'r').read()
 
-    for server in db.execute("SELECT * FROM servers"):
-        try:
-            health = get('http://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.01).json()
-            cpu = health['cpu']
-            ram = health['ram']
+    pool = Pool(4)
+    page = pool.map(get_server_status, db.execute("SELECT * FROM servers"))
+    pool.close()
+    pool.join()
 
-            if cpu > 85 or ram > 85:
-                icon = 'yellow.png'
-            else:
-                icon = 'green.png'
-
-            page += '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}%</td><td><img src="images/{icon}"></td><td><a href="remove?server={name}">X</a></td></tr>'.format(name=server[0], host=server[1], port=server[2], cpu=str(cpu), ram=str(ram), icon=icon)
-
-        except (exceptions.RequestException, ValueError):
-            page += '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A</td><td><img src="images/red.png"></td><td><a href="remove?server={name}">X</a></td></tr>'.format(name=server[0], host=server[1], port=server[2])
-
-    return template(html, body=page, username=username())
+    return template(html, body=''.join(page), username=username())
 
 
 @route('/add')
