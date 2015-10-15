@@ -80,7 +80,7 @@ def get_server_status(server):
 @route('/login')
 def login():
     if authorized():
-        redirect('/')
+        redirect(url + '/')
 
     if request.query.q == 'invalid':
         message = '<font color="red">Invalid Login</font><br/>'
@@ -93,7 +93,7 @@ def login():
 @route('/logout')
 def logout():
     response.set_cookie('sauerkraut', '', secret=secret, expires=0)
-    redirect('/login')
+    redirect(url + '/login')
 
 
 @route('/auth', method='POST')
@@ -106,26 +106,26 @@ def auth():
         entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username)).fetchall()[0]
 
     except IndexError:
-        redirect('/login?q=invalid')
+        redirect(url + '/login?q=invalid')
 
     if create_hash(password, entry[2])[0] == entry[1]:
         data = json.dumps({'username': username, 'key': key})
-        response.set_cookie(name='sauerkraut', value=data, secret=secret, max_age=1000)
+        response.set_cookie(name='sauerkraut', value=data, secret=secret, max_age=1000, secure=True)
 
         if password == 'admin':
-            redirect('/manage/change-password')
+            redirect(url + '/manage/change-password')
             
         else:
-            redirect('/')
+            redirect(url + '/')
 
     else:
-        redirect('/login?q=invalid')
+        redirect(url + '/login?q=invalid')
 
 
 @route('/')
 def index():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     html = open('html/list.html', 'r').read()
 
@@ -140,10 +140,10 @@ def index():
 @route('/add')
 def add_page():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     if not admin():
-        redirect('/denied')
+        redirect(url + '/denied')
 
     if request.query.q == 'invalid':
         message = '<font color="red">Invalid Server</font><br/>'
@@ -156,10 +156,10 @@ def add_page():
 @route('/add', method='POST')
 def add_server():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     if not admin():
-        redirect('/denied')
+        redirect(url + '/denied')
 
     name = request.forms.get('name')
     host = request.forms.get('host')
@@ -169,33 +169,33 @@ def add_server():
         get('http://{host}:{port}/status'.format(host=host, port=port))
 
     except:
-        redirect('/add?q=invalid')
+        redirect(url + '/add?q=invalid')
 
     #Add server to database.
     db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
     master_db.commit()
 
-    redirect('/')
+    redirect(url + '/')
 
 
 @route('/remove')
 def remove_server():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     if not admin():
-        redirect('/denied')
+        redirect(url + '/denied')
 
     db.execute("DELETE FROM servers WHERE name = '{0}'".format(request.query.server))
     master_db.commit()
 
-    redirect('/')
+    redirect(url + '/')
 
 
 @route('/server/<name>')
 def server(name):
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
 
     entry = db.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()[0]
@@ -216,14 +216,14 @@ def server(name):
 @route('/manage/change-password')
 def change_password_page():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     return template(open('html/change-password.html', 'r').read(), username=username())
 
 @route('/manage/change-password', method='POST')
 def change_password():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     old_pass = request.forms.get('old-password')
     new_pass = request.forms.get('new-password')
@@ -237,22 +237,22 @@ def change_password():
             db.execute("UPDATE accounts SET hash='{0}', salt='{1}' WHERE username='{2}'".format(new_hash, new_salt, username()))
             master_db.commit()
 
-            redirect('/logout')
+            redirect(url + '/logout')
 
         else:
-            redirect('/manage/change-password?q=invalid-old-pass')
+            redirect(url + '/manage/change-password?q=invalid-old-pass')
 
     else:
-        redirect('/manage/change-password?q=invalid-new-pass')
+        redirect(url + '/manage/change-password?q=invalid-new-pass')
 
 
 @route('/manage/new-user')
 def new_user_page():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     if not admin():
-        redirect('/denied')
+        redirect(url + '/denied')
 
     return open('html/new-user.html', 'r').read()
 
@@ -260,10 +260,10 @@ def new_user_page():
 @route('/manage/new-user', method='POST')
 def new_user():
     if not authorized():
-        redirect('/login')
+        redirect(url + '/login')
 
     if not admin():
-        redirect('/denied')
+        redirect(url + '/denied')
 
     username = request.forms.get('username')
     password = request.forms.get('password')
@@ -274,10 +274,10 @@ def new_user():
         db.execute("INSERT INTO accounts VALUES ('{0}', '{1}', '{2}', '{3}')".format(username, hash, salt, perms))
         master_db.commit()
 
-        redirect('/')
+        redirect(url + '/')
 
     else:
-        redirect('/manage/new-user?q=pass-invalid')
+        redirect(url + '/manage/new-user?q=pass-invalid')
 
 
 @route('/denied')
@@ -358,6 +358,8 @@ if __name__ == '__main__':
     key = config['key']
     host = config['host']
     port = config['port']
+
+    url = 'https://{0}:{1}'.format(host, str(port))
 
     srv = SSLWSGIRefServer(host=host, port=port)
     run(server=srv)
