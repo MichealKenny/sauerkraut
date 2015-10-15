@@ -1,4 +1,4 @@
-from bottle import route, run, static_file, request, response, redirect, template
+from bottle import ServerAdapter, route, run, static_file, request, response, redirect, template
 from multiprocessing.dummy import Pool
 from requests import get, exceptions
 import hashlib, uuid
@@ -300,6 +300,23 @@ def js(name):
     return static_file(name, root='js/', mimetype='text/javascript')
 
 
+class SSLWSGIRefServer(ServerAdapter):
+    def run(self, handler):
+        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        import ssl
+        if self.quiet:
+            class QuietHandler(WSGIRequestHandler):
+                def log_request(*args, **kw): pass
+            self.options['handler_class'] = QuietHandler
+        srv = make_server(self.host, self.port, handler, **self.options)
+        srv.socket = ssl.wrap_socket (
+         srv.socket,
+         certfile='server.pem',  # path to certificate
+         server_side=True)
+        srv.serve_forever()
+
+
+
 if __name__ == '__main__':
     print('Sauerkraut - Cluster Administration Tool')
     if not os.path.isfile('config.json'):
@@ -342,4 +359,5 @@ if __name__ == '__main__':
     host = config['host']
     port = config['port']
 
-    run(host=host, port=port)
+    srv = SSLWSGIRefServer(host=host, port=port)
+    run(server=srv)
