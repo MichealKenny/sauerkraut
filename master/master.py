@@ -45,8 +45,7 @@ def create_hash(password, salt=uuid.uuid4().hex):
 
 def get_server_status(server):
     try:
-        health = get('http://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.01).json()
-        print(health)
+        health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.1, verify=False).json()
         cpu = health['cpu']
         ram = health['ram']
 
@@ -166,7 +165,7 @@ def add_server():
     port = request.forms.get('port')
 
     try:
-        get('http://{host}:{port}/status'.format(host=host, port=port))
+        get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
 
     except:
         redirect(url + '/add?q=invalid')
@@ -201,7 +200,7 @@ def server(name):
     entry = db.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()[0]
 
     try:
-        health = get('http://{host}:{port}/status'.format(host=entry[1], port=entry[2]), timeout=0.1).json()
+        health = get('https://{host}:{port}/status'.format(host=entry[1], port=entry[2]), timeout=0.1, verify=False).json()
         cpu = health['cpu']
         ram = health['ram']
 
@@ -311,10 +310,9 @@ class SSLWSGIRefServer(ServerAdapter):
         srv = make_server(self.host, self.port, handler, **self.options)
         srv.socket = ssl.wrap_socket (
          srv.socket,
-         certfile='server.pem',  # path to certificate
+         certfile='master.pem',  # path to certificate
          server_side=True)
         srv.serve_forever()
-
 
 
 if __name__ == '__main__':
