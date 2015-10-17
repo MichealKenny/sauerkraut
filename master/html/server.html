@@ -1,12 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html>
+<head lang="en">
     <meta charset="UTF-8">
     <title>Sauerkraut - {{name}}</title>
+    <link rel="stylesheet" href="/css/stylesheet.css">
 </head>
 <body>
-<h2>{{name}}</h2>
-<p>CPU: {{cpu}}</p>
-<p>RAM: {{ram}}</p>
+    <div class="header">
+        <img src="/images/header.png" width="150px">
+        <p style="position: absolute; right: 15px; top: -13px; font-size: 12px;">Welcome, {{username}}.</p>
+        <p style="position: absolute; right: 57px; top: 1px; font-size: 12px;">|</p>
+        <a href="/logout" style="position: absolute; right: 15px; top: 14px; font-size: 12px;">Logout</a>
+        <a href="/manage" style="position: absolute; right: 65px; top: 14px; font-size: 12px;">Manage</a>
+    </div>
+    <div class="sidebar" align="center">
+        <br />
+        <p><a href="/">List Servers</a></p>
+        <p><a href="/add">Add Server</a></p>
+        <p><a href="/configure">Quick Config</a></p>
+        <p><a href="/custom">Custom Config</a></p>
+
+    </div>
+    <div class="body">
+        <h2>{{name}}</h2>
+        <p>CPU: {{cpu}}</p>
+        <p>RAM: {{ram}}</p>
+    </div>
 </body>
 </html>

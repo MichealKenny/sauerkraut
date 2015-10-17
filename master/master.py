@@ -198,7 +198,7 @@ def server(name):
 
 
         html = open('html/server.html', 'r').read()
-        return template(html, {'name': name, 'cpu': cpu, 'ram': ram})
+        return template(html, {'name': name, 'cpu': cpu, 'ram': ram, 'username': username()})
 
     except exceptions.RequestException:
         return 'Server down.'
