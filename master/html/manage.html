@@ -2,12 +2,14 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Sauerkraut - New User</title>
+    <title>Sauerkraut - Manage</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/chart.js"></script>
 </head>
 <body>
     <div class="header">
-        <img src="/images/header.png" width="150px">
+        <img src="images/header.png" width="150px">
         <p style="position: absolute; right: 15px; top: -13px; font-size: 12px;">Welcome, {{username}}.</p>
         <p style="position: absolute; right: 57px; top: 1px; font-size: 12px;">|</p>
         <a href="/logout" style="position: absolute; right: 15px; top: 14px; font-size: 12px;">Logout</a>
@@ -22,18 +24,9 @@
 
     </div>
     <div class="body">
-        <h3>Create a new user:</h3>
-         <form action="/manage/new-user" method="post">
-            <input type="text" name="username" placeholder="Username"><br>
-            <input type="password" name="password" placeholder="Password"><br>
-            <input type="password" name="password-confirm" placeholder="Confirm Password"><br>
-            Permissions level:
-            <select name="perms">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-            </select>
-            <input type="submit" value="Submit">
-         </form>
+        <h3>Manage Sauerkraut</h3>
+        <p><a href="/manage/change-password">Change password for {{username}}</a></p>
+        <p><a href="/manage/new-user">Create a new user</a></p>
     </div>
 </body>
 </html>

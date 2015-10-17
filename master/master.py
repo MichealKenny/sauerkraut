@@ -81,12 +81,8 @@ def login():
     if authorized():
         redirect(url + '/')
 
-    if request.query.q == 'invalid':
-        message = '<font color="red">Invalid Login</font><br/>'
-    else:
-        message = ''
 
-    return message + open('html/login.html', 'r').read()
+    return open('html/login.html', 'r').read()
 
 
 @route('/logout')
@@ -105,20 +101,20 @@ def auth():
         entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username)).fetchall()[0]
 
     except IndexError:
-        redirect(url + '/login?q=invalid')
+        redirect(url + '/login#invalid-login')
 
     if create_hash(password, entry[2])[0] == entry[1]:
         data = json.dumps({'username': username, 'key': key})
         response.set_cookie(name='sauerkraut', value=data, secret=secret, max_age=1000, secure=True)
 
-        if password == 'admin':
-            redirect(url + '/manage/change-password')
+        if (username, password) == ('admin', 'admin'):
+            redirect(url + '/manage/change-password#default-admin')
             
         else:
             redirect(url + '/')
 
     else:
-        redirect(url + '/login?q=invalid')
+        redirect(url + '/login#invalid-login')
 
 
 @route('/')
@@ -144,12 +140,8 @@ def add_page():
     if not admin():
         redirect(url + '/denied')
 
-    if request.query.q == 'invalid':
-        message = '<font color="red">Invalid Server</font><br/>'
-    else:
-        message = ''
-
-    return message + open('html/add.html', 'r').read()
+    html = open('html/add.html', 'r').read()
+    return template(html, username=username())
 
 
 @route('/add', method='POST')
@@ -168,7 +160,7 @@ def add_server():
         get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
 
     except:
-        redirect(url + '/add?q=invalid')
+        redirect(url + '/add?#invalid-server')
 
     #Add server to database.
     db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
@@ -212,6 +204,11 @@ def server(name):
         return 'Server down.'
 
 
+@route('/manage')
+def manage():
+    html = open('html/manage.html', 'r').read()
+    return template(html, username=username())
+
 @route('/manage/change-password')
 def change_password_page():
     if not authorized():
@@ -239,10 +236,10 @@ def change_password():
             redirect(url + '/logout')
 
         else:
-            redirect(url + '/manage/change-password?q=invalid-old-pass')
+            redirect(url + '/manage/change-password#invalid-old-pass')
 
     else:
-        redirect(url + '/manage/change-password?q=invalid-new-pass')
+        redirect(url + '/manage/change-password#invalid-new-pass')
 
 
 @route('/manage/new-user')
@@ -253,7 +250,8 @@ def new_user_page():
     if not admin():
         redirect(url + '/denied')
 
-    return open('html/new-user.html', 'r').read()
+    html = open('html/new-user.html', 'r').read()
+    return template(html, username=username())
 
 
 @route('/manage/new-user', method='POST')
@@ -276,7 +274,7 @@ def new_user():
         redirect(url + '/')
 
     else:
-        redirect(url + '/manage/new-user?q=pass-invalid')
+        redirect(url + '/manage/new-user#pass-invalid')
 
 
 @route('/denied')

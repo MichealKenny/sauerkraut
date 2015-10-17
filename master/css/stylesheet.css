@@ -42,6 +42,12 @@ body {
     border-color: #efefef;
 }
 
+.error {
+    display: none;
+}
+.error:target {
+    display: block;
+}
 td {
     padding: 4px;
     border: 1px #efefef solid;
