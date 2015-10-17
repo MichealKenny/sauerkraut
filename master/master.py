@@ -206,6 +206,9 @@ def server(name):
 
 @route('/manage')
 def manage():
+    if not authorized():
+        redirect(url + '/login')
+
     html = open('html/manage.html', 'r').read()
     return template(html, username=username())
 

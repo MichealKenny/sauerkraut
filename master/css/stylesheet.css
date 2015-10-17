@@ -31,6 +31,15 @@ body {
     bottom: 0;
     overflow-y: auto;
 }
+
+.notification {
+    left: 188px;
+    width:200px;
+    padding: 22px;
+    height: 20px;
+    font-size:13px;
+}
+
 .login {
     position: absolute;
     margin: -100px 0 0 -260px;
