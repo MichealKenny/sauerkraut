@@ -1,6 +1,7 @@
 from bottle import ServerAdapter, route, run, static_file, request, response, redirect, template
 from multiprocessing.dummy import Pool
 from requests import get, exceptions
+from datetime import datetime
 import hashlib, uuid
 import sqlite3
 import json
@@ -55,21 +56,21 @@ def get_server_status(server):
             icon = 'green.png'
 
         row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}' \
-              '%</td><td><img src="images/{icon}"></td><td><a href="remove?server={name}">X</a></td></tr>'\
+              '%</td><td><img src="images/{icon}"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2], cpu=str(cpu), ram=str(ram), icon=icon)
 
         return row
 
     except (exceptions.RequestException, ValueError):
         row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
-              '</td><td><img src="images/red.png"></td><td><a href="remove?server={name}">X</a></td></tr>'\
+              '</td><td><img src="images/red.png"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2])
 
         return row
 
     except KeyError:
         row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
-              '</td><td>Not Auth</td><td><a href="remove?server={name}">X</a></td></tr>'\
+              '</td><td>Not Auth</td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2])
 
         return row
@@ -106,6 +107,10 @@ def auth():
     if create_hash(password, entry[2])[0] == entry[1]:
         data = json.dumps({'username': username, 'key': key})
         response.set_cookie(name='sauerkraut', value=data, secret=secret, max_age=1000, secure=True)
+
+        last = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        db.execute("UPDATE accounts SET last='{0}' WHERE username='{1}'".format(last, username))
+        master_db.commit()
 
         if (username, password) == ('admin', 'admin'):
             redirect(url + '/manage/change-password#default-admin')
@@ -169,7 +174,7 @@ def add_server():
     redirect(url + '/')
 
 
-@route('/remove')
+@route('/remove-server')
 def remove_server():
     if not authorized():
         redirect(url + '/login')
@@ -209,8 +214,14 @@ def manage():
     if not authorized():
         redirect(url + '/login')
 
+    table = ''
+
+    for entry in db.execute("SELECT * FROM accounts"):
+        table += '<tr><td>{name}</td><td>{perms}</td><td>{last}</td><td><a href="remove-user?username={name}">X</a>' \
+                 '</td></tr>'.format(name=entry[0], perms=entry[3], last=entry[4])
+
     html = open('html/manage.html', 'r').read()
-    return template(html, username=username())
+    return template(html, username=username(), table=table)
 
 @route('/manage/change-password')
 def change_password_page():
@@ -269,16 +280,55 @@ def new_user():
     password = request.forms.get('password')
     password_confirm = request.forms.get('password-confirm')
     perms = request.forms.get('perms')
+
     if password == password_confirm:
+        if len(password) < 8:
+            redirect(url + '/manage/new-user#pass-length')
+
+        if len(username) < 4:
+            redirect(url + '/manage/new-user#invalid-username')
+
+        if set('[ ~!#$@%^&*()+{}":;\']+$').intersection(username):
+            redirect(url + '/manage/new-user#invalid-username')
+
+        exists = db.execute("SELECT username FROM accounts WHERE username = '{0}'".format(username)).fetchall()
+        if exists:
+            redirect(url + '/manage/new-user#username-taken')
+
+
+
         hash, salt = create_hash(password)
-        db.execute("INSERT INTO accounts VALUES ('{0}', '{1}', '{2}', '{3}')".format(username, hash, salt, perms))
+        db.execute("INSERT INTO accounts VALUES ('{0}', '{1}', '{2}', '{3}', 'Never')".format(username, hash, salt, perms))
         master_db.commit()
 
-        redirect(url + '/')
+        redirect(url + '/manage')
 
     else:
         redirect(url + '/manage/new-user#pass-invalid')
 
+
+@route('/remove-user')
+def remove_user():
+    if not authorized():
+        redirect(url + '/login')
+
+    user = request.query.username
+
+    if user == 'admin':
+        redirect(url + '/denied')
+
+    if username() != user:
+        if not admin():
+            redirect(url + '/denied')
+
+    db.execute("DELETE FROM accounts WHERE username = '{0}'".format(user))
+    master_db.commit()
+
+    if username() == user:
+        redirect(url + '/logout')
+
+    else:
+        redirect(url + '/manage')
 
 @route('/denied')
 def denied():
@@ -317,6 +367,7 @@ class SSLWSGIRefServer(ServerAdapter):
 
 
 if __name__ == '__main__':
+
     print('Sauerkraut - Cluster Administration Tool')
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
@@ -336,10 +387,11 @@ if __name__ == '__main__':
         db = master_db.cursor()
 
         db.execute("CREATE TABLE servers (name text, host text, port text)")
-        db.execute("CREATE TABLE accounts (username text, hash text, salt text, perms text)")
+        db.execute("CREATE TABLE accounts (username text, hash text, salt text, perms text, last text)")
         db.execute("INSERT INTO accounts VALUES ('admin','33ff7d10cd1f5bc60c0d5d0a331f39a1c4ad98ed5bc2e357f291700197"
                                                          "c38734f3da4e9a7bf421b4cad90fcb5a3c38171493f306af24c8acc733"
-                                                         "20c3339e09aa','230f3cbd511a4ac79dff00a998dd6641', 'admin')")
+                                                         "20c3339e09aa','230f3cbd511a4ac79dff00a998dd6641',"
+                                                         "'admin', 'Never')")
         master_db.commit()
         master_db.close()
 

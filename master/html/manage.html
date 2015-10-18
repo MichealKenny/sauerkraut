@@ -27,6 +27,23 @@
         <h3>Manage Sauerkraut</h3>
         <p><a href="/manage/change-password">Change password for {{username}}</a></p>
         <p><a href="/manage/new-user">Create a new user</a></p>
+
+        <br /><h3>List of Users</h3>
+        <input type="text" id="search" style="width: 794px;" placeholder="Filter Users">
+        <table id="table" style="width:800px;text-align: center;">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Permission Level</th>
+                <th>Last Login (UTC)</th>
+                <th>Remove</th>
+            </tr>
+            </thead>
+            <tbody>
+                {{!table}}
+            </tbody>
+        </table>
     </div>
 </body>
+<script type="text/javascript" src="/js/filter.js"></script>
 </html>
