@@ -94,7 +94,7 @@ def logout():
 
 @route('/auth', method='POST')
 def auth():
-    username = request.forms.get('username')
+    username = request.forms.get('username').lower()
     password = request.forms.get('password')
 
     #Get data from db.
@@ -157,7 +157,7 @@ def add_server():
     if not admin():
         redirect(url + '/denied')
 
-    name = request.forms.get('name')
+    name = request.forms.get('name').lower()
     host = request.forms.get('host')
     port = request.forms.get('port')
 
@@ -165,7 +165,17 @@ def add_server():
         get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
 
     except:
-        redirect(url + '/add?#invalid-server')
+        redirect(url + '/add#invalid-server')
+
+    if len(name) < 4:
+        redirect(url + '/add#invalid-name')
+
+    if set('[ ~!#$@%^&*()+{}":;\']+$').intersection(name):
+        redirect(url + '/add#invalid-name')
+
+    exists = db.execute("SELECT name FROM servers WHERE name = '{0}'".format(name)).fetchall()
+    if exists:
+        redirect(url + '/add#name-exists')
 
     #Add server to database.
     db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
@@ -276,7 +286,7 @@ def new_user():
     if not admin():
         redirect(url + '/denied')
 
-    username = request.forms.get('username')
+    username = request.forms.get('username').lower()
     password = request.forms.get('password')
     password_confirm = request.forms.get('password-confirm')
     perms = request.forms.get('perms')
