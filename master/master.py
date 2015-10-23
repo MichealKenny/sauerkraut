@@ -23,7 +23,7 @@ def authorized():
         return False
 
 def admin():
-    entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username())).fetchall()[0]
+    entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(current_user())).fetchall()[0]
 
     if entry[3] == 'admin':
         return True
@@ -31,7 +31,7 @@ def admin():
     else:
         return False
 
-def username():
+def current_user():
     sk = json.loads(request.get_cookie('sauerkraut', secret=secret))
 
     return sk['username']
@@ -46,7 +46,7 @@ def create_hash(password, salt=uuid.uuid4().hex):
 
 def get_server_status(server):
     try:
-        health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.1, verify=False).json()
+        health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.01, verify=False).json()
         cpu = health['cpu']
         ram = health['ram']
 
@@ -88,6 +88,10 @@ def login():
 
 @route('/logout')
 def logout():
+    log.execute("INSERT INTO events VALUES ('User {0} logged out','Logout','{0}','{1}')"
+        .format(current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+    logs_db.commit()
+
     response.set_cookie('sauerkraut', '', secret=secret, expires=0)
     redirect(url + '/login')
 
@@ -112,6 +116,10 @@ def auth():
         db.execute("UPDATE accounts SET last='{0}' WHERE username='{1}'".format(last, username))
         master_db.commit()
 
+        log.execute("INSERT INTO events VALUES ('User {0} logged in','Login','{0}','{1}')"
+            .format(username, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+        logs_db.commit()
+
         if (username, password) == ('admin', 'admin'):
             redirect(url + '/manage/change-password#default-admin')
             
@@ -129,12 +137,16 @@ def index():
 
     html = open('html/list.html', 'r').read()
 
-    pool = Pool(4)
-    page = pool.map(get_server_status, db.execute("SELECT * FROM servers"))
-    pool.close()
-    pool.join()
+    servers = db.execute('SELECT * FROM servers').fetchall()
+    if len(servers) == 0:
+        redirect(url + '/add#no-servers')
 
-    return template(html, body=''.join(page), username=username())
+    else:
+        pool = Pool(len(servers))
+        page = pool.map(get_server_status, servers)
+        pool.close()
+
+    return template(html, body=''.join(page), username=current_user())
 
 
 @route('/add')
@@ -146,7 +158,7 @@ def add_page():
         redirect(url + '/denied')
 
     html = open('html/add.html', 'r').read()
-    return template(html, username=username())
+    return template(html, username=current_user())
 
 
 @route('/add', method='POST')
@@ -181,6 +193,10 @@ def add_server():
     db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
     master_db.commit()
 
+    log.execute("INSERT INTO events VALUES ('Server {0} added','Server Added','{1}','{2}')"
+                .format(name, current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+    logs_db.commit()
+
     redirect(url + '/')
 
 
@@ -194,6 +210,10 @@ def remove_server():
 
     db.execute("DELETE FROM servers WHERE name = '{0}'".format(request.query.server))
     master_db.commit()
+
+    log.execute("INSERT INTO events VALUES ('Server {0} removed','Server Removed','{1}','{2}')"
+                .format(request.query.server, current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+    logs_db.commit()
 
     redirect(url + '/')
 
@@ -213,7 +233,7 @@ def server(name):
 
 
         html = open('html/server.html', 'r').read()
-        return template(html, {'name': name, 'cpu': cpu, 'ram': ram, 'username': username()})
+        return template(html, {'name': name, 'cpu': cpu, 'ram': ram, 'username': current_user()})
 
     except exceptions.RequestException:
         return 'Server down.'
@@ -231,14 +251,14 @@ def manage():
                  '</td></tr>'.format(name=entry[0], perms=entry[3], last=entry[4])
 
     html = open('html/manage.html', 'r').read()
-    return template(html, username=username(), table=table)
+    return template(html, username=current_user(), table=table)
 
 @route('/manage/change-password')
 def change_password_page():
     if not authorized():
         redirect(url + '/login')
 
-    return template(open('html/change-password.html', 'r').read(), username=username())
+    return template(open('html/change-password.html', 'r').read(), username=current_user())
 
 @route('/manage/change-password', method='POST')
 def change_password():
@@ -250,12 +270,16 @@ def change_password():
     new_pass_confirm = request.forms.get('new-password-confirm')
 
     if new_pass == new_pass_confirm:
-        entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username())).fetchall()[0]
+        entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(current_user())).fetchall()[0]
         if create_hash(old_pass, entry[2])[0] == entry[1]:
             new_hash, new_salt = create_hash(new_pass)
 
-            db.execute("UPDATE accounts SET hash='{0}', salt='{1}' WHERE username='{2}'".format(new_hash, new_salt, username()))
+            db.execute("UPDATE accounts SET hash='{0}', salt='{1}' WHERE username='{2}'".format(new_hash, new_salt, current_user()))
             master_db.commit()
+
+            log.execute("INSERT INTO events VALUES ('Password changed for: {0}','Password Change','{0}','{1}')"
+                .format(current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+            logs_db.commit()
 
             redirect(url + '/logout')
 
@@ -275,7 +299,7 @@ def new_user_page():
         redirect(url + '/denied')
 
     html = open('html/new-user.html', 'r').read()
-    return template(html, username=username())
+    return template(html, username=current_user())
 
 
 @route('/manage/new-user', method='POST')
@@ -311,6 +335,10 @@ def new_user():
         db.execute("INSERT INTO accounts VALUES ('{0}', '{1}', '{2}', '{3}', 'Never')".format(username, hash, salt, perms))
         master_db.commit()
 
+        log.execute("INSERT INTO events VALUES ('User {0} added','User Added','{1}','{2}')"
+                    .format(username, current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+        logs_db.commit()
+
         redirect(url + '/manage')
 
     else:
@@ -327,14 +355,18 @@ def remove_user():
     if user == 'admin':
         redirect(url + '/denied')
 
-    if username() != user:
+    if current_user() != user:
         if not admin():
             redirect(url + '/denied')
 
     db.execute("DELETE FROM accounts WHERE username = '{0}'".format(user))
     master_db.commit()
 
-    if username() == user:
+    log.execute("INSERT INTO events VALUES ('User {0} removed','User Removed','{1}','{2}')"
+                .format(user, current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+    logs_db.commit()
+
+    if current_user() == user:
         redirect(url + '/logout')
 
     else:
@@ -343,6 +375,22 @@ def remove_user():
 @route('/denied')
 def denied():
     return 'You lack the required permission to perform this action'
+
+
+@route('/manage/event-viewer')
+def event_viewer():
+    if not authorized():
+        redirect(url + '/login')
+
+    html = open('html/event-viewer.html', 'r').read()
+    page = ''
+
+    events = log.execute('SELECT * FROM events').fetchall()
+    for event in reversed(events):
+        page += '<tr><td>{0}</a></td><td>{1}</td><td>{2}</td><td>{3}</td></tr>'\
+            .format(event[0], event[1], event[2], event[3])
+
+    return template(html, body=page, username=current_user())
 
 
 @route('/images/<name>')
@@ -377,8 +425,11 @@ class SSLWSGIRefServer(ServerAdapter):
 
 
 if __name__ == '__main__':
-
     print('Sauerkraut - Cluster Administration Tool')
+
+    if not os.path.isdir('dbs'):
+        os.mkdir('dbs')
+
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
 
@@ -391,9 +442,9 @@ if __name__ == '__main__':
 
         print('\nCreated configuration file, it can be changed at any time.')
 
-    if not os.path.isfile('master.db'):
+    if not os.path.isfile('dbs/master.db'):
         #Connect to database
-        master_db = sqlite3.connect('master.db', check_same_thread=False)
+        master_db = sqlite3.connect('dbs/master.db', check_same_thread=False)
         db = master_db.cursor()
 
         db.execute("CREATE TABLE servers (name text, host text, port text)")
@@ -405,11 +456,27 @@ if __name__ == '__main__':
         master_db.commit()
         master_db.close()
 
-        print('Created database, default login is admin:admin')
+        print('Created master database, default login is admin:admin')
 
-    #Connect to database
-    master_db = sqlite3.connect('master.db', check_same_thread=False)
+    if not os.path.isfile('dbs/logs.db'):
+        #Connect to database
+        logs_db = sqlite3.connect('dbs/logs.db', check_same_thread=False)
+        log = logs_db.cursor()
+
+        log.execute("CREATE TABLE events (event text, type text, user text, time text)")
+
+        logs_db.commit()
+        logs_db.close()
+
+        print('Created logs database')
+
+
+    #Connect to databases
+    master_db = sqlite3.connect('dbs/master.db', check_same_thread=False)
     db = master_db.cursor()
+
+    logs_db = sqlite3.connect('dbs/logs.db', check_same_thread=False)
+    log = logs_db.cursor()
 
     config_file = open('config.json', 'r')
     config = json.loads(config_file.read())

@@ -2,14 +2,14 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Sauerkraut - Manage</title>
+    <title>Sauerkraut - Event Viewer</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
     <script type="text/javascript" src="/js/jquery.js"></script>
     <script type="text/javascript" src="/js/chart.js"></script>
 </head>
 <body>
     <div class="header">
-        <img src="images/header.png" width="150px">
+        <img src="/images/header.png" width="150px">
         <p style="position: absolute; right: 15px; top: -13px; font-size: 12px;">Welcome, {{username}}.</p>
         <p style="position: absolute; right: 57px; top: 1px; font-size: 12px;">|</p>
         <a href="/logout" style="position: absolute; right: 15px; top: 14px; font-size: 12px;">Logout</a>
@@ -24,24 +24,19 @@
 
     </div>
     <div class="body">
-        <h3>Manage Sauerkraut</h3>
-        <p><a href="/manage/change-password">Change password for {{username}}</a></p>
-        <p><a href="/manage/new-user">Create a new user</a></p>
-        <p><a href="/manage/event-viewer">Event Viewer</a></p>
-
-        <br /><h3>List of Users</h3>
-        <input type="text" id="search" style="width: 794px;" placeholder="Filter Users">
+        <h3>Event Viewer</h3>
+        <input type="text" id="search" style="width: 794px;" placeholder="Filter Events">
         <table id="table" style="width:800px;text-align: center;">
             <thead>
             <tr>
-                <th>Username</th>
-                <th>Permission Level</th>
-                <th>Last Login (UTC)</th>
-                <th>Remove</th>
+                <th>Event</th>
+                <th>Event Type</th>
+                <th>User</th>
+                <th>Timestamp (UTC)</th>
             </tr>
             </thead>
             <tbody>
-                {{!table}}
+                {{!body}}
             </tbody>
         </table>
     </div>
