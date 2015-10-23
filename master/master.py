@@ -189,7 +189,7 @@ def add_server():
     if exists:
         redirect(url + '/add#name-exists')
 
-    #Add server to database.
+    #Add server to databases.
     db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
     master_db.commit()
 
@@ -213,6 +213,7 @@ def remove_server():
 
     log.execute("INSERT INTO events VALUES ('Server {0} removed','Server Removed','{1}','{2}')"
                 .format(request.query.server, current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+    log.execute("DELETE FROM servers WHERE name = '{0}'".format(request.query.server))
     logs_db.commit()
 
     redirect(url + '/')
@@ -233,7 +234,13 @@ def server(name):
 
 
         html = open('html/server.html', 'r').read()
-        return template(html, {'name': name, 'cpu': cpu, 'ram': ram, 'username': current_user()})
+
+        page = ''
+        data = log.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()
+        for row in data:
+            page += '<p>{0}: CPU: {1}%, RAM: {2}%</p>'.format(row[0], row[2], row[3])
+
+        return template(html, {'name': name, 'cpu': cpu, 'ram': ram, 'username': current_user(), 'data': page})
 
     except exceptions.RequestException:
         return 'Server down.'
@@ -464,6 +471,8 @@ if __name__ == '__main__':
         log = logs_db.cursor()
 
         log.execute("CREATE TABLE events (event text, type text, user text, time text)")
+        log.execute("CREATE TABLE servers (time text, name text, cpu text, ram text, "
+                    "disk_usage text, disk_read text,disk_write text, total_packets text)")
 
         logs_db.commit()
         logs_db.close()
