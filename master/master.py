@@ -45,6 +45,10 @@ def create_hash(password, salt=uuid.uuid4().hex):
 
 
 def get_server_status(server):
+    global green
+    global yellow
+    global red
+
     try:
         health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.01, verify=False).json()
         cpu = health['cpu']
@@ -52,8 +56,10 @@ def get_server_status(server):
 
         if cpu > 85 or ram > 85:
             icon = 'yellow.png'
+            yellow += 1
         else:
             icon = 'green.png'
+            green += 1
 
         row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}' \
               '%</td><td><img src="images/{icon}"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
@@ -65,6 +71,7 @@ def get_server_status(server):
         row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
               '</td><td><img src="images/red.png"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2])
+        red += 1
 
         return row
 
@@ -72,6 +79,7 @@ def get_server_status(server):
         row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
               '</td><td>Not Auth</td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2])
+        red += 1
 
         return row
 
@@ -132,6 +140,10 @@ def auth():
 
 @route('/')
 def index():
+    global green
+    global yellow
+    global red
+
     if not authorized():
         redirect(url + '/login')
 
@@ -142,11 +154,16 @@ def index():
         redirect(url + '/add#no-servers')
 
     else:
+        green = 0
+        yellow = 0
+        red = 0
+
         pool = Pool(len(servers))
         page = pool.map(get_server_status, servers)
         pool.close()
 
-    return template(html, body=''.join(page), username=current_user())
+    print(green, yellow, red)
+    return template(html, {'body': ''.join(page), 'username':current_user(), 'green': green, 'yellow': yellow, 'red': red})
 
 
 @route('/add')
@@ -224,23 +241,54 @@ def server(name):
     if not authorized():
         redirect(url + '/login')
 
-
-    entry = db.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()[0]
-
     try:
-        health = get('https://{host}:{port}/status'.format(host=entry[1], port=entry[2]), timeout=0.1, verify=False).json()
-        cpu = health['cpu']
-        ram = health['ram']
-
-
         html = open('html/server.html', 'r').read()
 
-        page = ''
+        labels, cpu_data, ram_data, disk_data, disk_read_data, \
+        disk_write_data, total_packets_data = '[', '[', '[', '[', '[', '[', '['
+        cpu_total, ram_total, disk_total, disk_read_total, \
+        disk_write_total, total_packets_total = 0, 0, 0, 0, 0, 0
+
+        count = 0
+        avg_count = 0
+
+
         data = log.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()
         for row in data:
-            page += '<p>{0}: CPU: {1}%, RAM: {2}%</p>'.format(row[0], row[2], row[3])
+            cpu_total += float(row[2])
+            ram_total += float(row[3])
+            disk_total += float(row[4])
+            disk_read_total += float(row[5])
+            disk_write_total += float(row[6])
+            total_packets_total += float(row[7])
 
-        return template(html, {'name': name, 'cpu': cpu, 'ram': ram, 'username': current_user(), 'data': page})
+            count += 1
+            avg_count += 1
+            avg = len(data) / 10
+
+            if count > avg:
+                labels += '"' + row[0][-8:] + '",'
+                cpu_data += '"' + str(round(cpu_total/avg_count, 2)) + '",'
+                ram_data += '"' + str(round(ram_total/avg_count, 2)) + '",'
+                disk_data += '"' + str(round(disk_total/avg_count, 2)) + '",'
+                disk_read_data += '"' + str(round(disk_read_total/avg_count, 2)) + '",'
+                disk_write_data += '"' + str(round(disk_write_total/avg_count, 2)) + '",'
+                total_packets_data += '"' + str(round(total_packets_total/avg_count, 2)) + '",'
+
+                count = 0
+
+
+        labels = labels[:-1] + ']'
+        cpu_data = cpu_data[:-1] + ']'
+        ram_data = ram_data[:-1] + ']'
+        disk_data = disk_data[:-1] + ']'
+        disk_read_data = disk_read_data[:-1] + ']'
+        disk_write_data = disk_write_data[:-1] + ']'
+        total_packets_data = total_packets_data[:-1] + ']'
+
+        return template(html, {'name': name, 'username': current_user(), 'labels': labels, 'cpu_data': cpu_data,
+                               'ram_data': ram_data, 'disk_data': disk_data, 'disk_read_data': disk_read_data,
+                               'disk_write_data': disk_write_data, 'total_packets_data': total_packets_data})
 
     except exceptions.RequestException:
         return 'Server down.'
@@ -437,6 +485,11 @@ if __name__ == '__main__':
     if not os.path.isdir('dbs'):
         os.mkdir('dbs')
 
+    if not os.path.isfile('master.pem'):
+        print('Sauerkraut requires an openssl generated master.pem file')
+        print('Generate with: openssl req -new -x509 -keyout master.pem -out master.pem -days 365 -nodes')
+        quit()
+
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
 
@@ -498,5 +551,6 @@ if __name__ == '__main__':
 
     url = 'https://{0}:{1}'.format(host, str(port))
 
+    print('https://{0}:{1}/'.format(host, port))
     srv = SSLWSGIRefServer(host=host, port=port)
     run(server=srv)

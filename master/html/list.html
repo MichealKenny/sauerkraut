@@ -15,13 +15,20 @@
         <a href="/logout" style="position: absolute; right: 15px; top: 14px; font-size: 12px;">Logout</a>
         <a href="/manage" style="position: absolute; right: 65px; top: 14px; font-size: 12px;">Manage</a>
     </div>
+    <div style="position: absolute;width: 140px; top: 250px; font-size: 11px;" align="center">
+        <p>Healthy Servers: {{green}}</p>
+        <p>Unhealthy Servers: {{yellow}}</p>
+        <p>Servers Down: {{red}}</p>
+        <canvas id="server_status_canvas" width="200" height="200"/>
+	</div>
+    <div style="position: absolute; top:240px; width: 140px; border-bottom: 2px solid; border-color: #efefef"></div>
+    <div style="position: absolute; top:490px; width: 140px; border-bottom: 2px solid; border-color: #efefef"></div>
     <div class="sidebar" align="center">
         <br />
         <p><a href="/">List Servers</a></p>
         <p><a href="/add">Add Server</a></p>
         <p><a href="/configure">Quick Config</a></p>
         <p><a href="/custom">Custom Config</a></p>
-
     </div>
     <div class="body">
         <h3>List of Servers</h3>
@@ -42,6 +49,35 @@
             </tbody>
         </table>
     </div>
+
+	<script>
+		var servers_chart = [
+				{
+					value: {{green}},
+					color: "#64DE29",
+					highlight: "#59BF26",
+					label: "Servers Up"
+				},
+				{
+					value: {{yellow}},
+					color: "#D5DE2D",
+					highlight: "#C1C926",
+					label: "Servers under high load"
+				},
+				{
+					value: {{red}},
+					color:"#D41420",
+					highlight: "#B2131B",
+					label: "Servers down"
+				}
+
+			];
+
+			window.onload = function(){
+				var ctx = document.getElementById("server_status_canvas").getContext("2d");
+				window.myDoughnut = new Chart(ctx).Doughnut(servers_chart, {responsive : true});
+			};
+	</script>
 </body>
 <script type="text/javascript" src="/js/filter.js"></script>
 </html>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Sauerkraut - {{name}}</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/chart.js"></script>
 </head>
 <body>
     <div class="header">
@@ -23,13 +25,168 @@
     </div>
     <div class="body">
         <h2>{{name}}</h2>
-        <h3>Current:</h3>
-        <p>CPU: {{cpu}}</p>
-        <p>RAM: {{ram}}</p>
-        <br />
 
-        <h3>History:</h3>
-        {{!data}}
-    </div>
+        <div style="left: 150px;top:40px;bottom: 40px; right: 40px;">
+            <div style="width:32.5%;height:20%;float: left;" align="center">CPU Usage<canvas id="cpu_canvas" height="140" width="200"></canvas></div>
+            <div style="width:32.5%;height:20%;float: left;" align="center">RAM Usage<canvas id="ram_canvas" height="140" width="200"></canvas></div>
+            <div style="width:32.5%;height:20%;float: left;" align="center">Disk Usage<canvas id="disk_canvas" height="140" width="200"></canvas></div>
+            <div style="width:32.5%;height:20%;float: left;" align="center">Disk Read Count<canvas id="disk_read_canvas" height="140" width="200"></canvas></div>
+            <div style="width:32.5%;height:20%;float: left;" align="center">Disk Write Count<canvas id="disk_write_canvas" height="140" width="200"></canvas></div>
+            <div style="width:32.5%;height:20%;float: left;" align="center">Total Packet Count<canvas id="total_packets_canvas" height="140" width="200"></canvas></div>
+
+        </div>
+
+	<script>
+		var cpu_chart = {
+			labels : {{!labels}},
+			datasets : [
+				{
+					label: "CPU",
+					fillColor : "#efefef",
+					strokeColor : "#14dcaf",
+					pointColor : "rgba(220,220,220,1)",
+					pointStrokeColor : "#fff",
+					pointHighlightFill : "#fff",
+					pointHighlightStroke : "rgba(220,220,220,1)",
+                    pointHitDetectionRadius: 1,
+					data : {{!cpu_data}}
+				}
+			]
+
+                };
+
+
+        var ram_chart = {
+			labels : {{!labels}},
+			datasets : [
+				{
+					label: "RAM",
+					fillColor : "#efefef",
+					strokeColor : "#14dcaf",
+					pointColor : "rgba(220,220,220,1)",
+					pointStrokeColor : "#fff",
+					pointHighlightFill : "#fff",
+					pointHighlightStroke : "rgba(220,220,220,1)",
+                    pointHitDetectionRadius: 1,
+					data : {{!ram_data}}
+				}
+			]
+
+                };
+
+        var disk_chart = {
+			labels : {{!labels}},
+			datasets : [
+				{
+					label: "Disk",
+					fillColor : "#efefef",
+					strokeColor : "#14dcaf",
+					pointColor : "rgba(220,220,220,1)",
+					pointStrokeColor : "#fff",
+					pointHighlightFill : "#fff",
+					pointHighlightStroke : "rgba(220,220,220,1)",
+                    pointHitDetectionRadius: 1,
+					data : {{!disk_data}}
+				}
+			]
+
+                };
+
+        var disk_read_chart = {
+			labels : {{!labels}},
+			datasets : [
+				{
+					label: "Disk Read",
+					fillColor : "#efefef",
+					strokeColor : "#14dcaf",
+					pointColor : "rgba(220,220,220,1)",
+					pointStrokeColor : "#fff",
+					pointHighlightFill : "#fff",
+					pointHighlightStroke : "rgba(220,220,220,1)",
+                    pointHitDetectionRadius: 1,
+					data : {{!disk_read_data}}
+				}
+			]
+
+                };
+
+        var disk_write_chart = {
+			labels : {{!labels}},
+			datasets : [
+				{
+					label: "Disk Write",
+					fillColor : "#efefef",
+					strokeColor : "#14dcaf",
+					pointColor : "rgba(220,220,220,1)",
+					pointStrokeColor : "#fff",
+					pointHighlightFill : "#fff",
+					pointHighlightStroke : "rgba(220,220,220,1)",
+                    pointHitDetectionRadius: 1,
+					data : {{!disk_write_data}}
+				}
+			]
+
+                };
+
+        var total_packets_chart = {
+			labels : {{!labels}},
+			datasets : [
+				{
+					label: "Total Packets",
+					fillColor : "#efefef",
+					strokeColor : "#14dcaf",
+					pointColor : "rgba(220,220,220,1)",
+					pointStrokeColor : "#fff",
+					pointHighlightFill : "#fff",
+					pointHighlightStroke : "rgba(220,220,220,1)",
+                    pointHitDetectionRadius: 1,
+					data : {{!total_packets_data}}
+				}
+			]
+
+                };
+
+	window.onload = function(){
+		var ctx = document.getElementById("cpu_canvas").getContext("2d");
+		window.myLine = new Chart(ctx).Line(cpu_chart, {
+			responsive: true,
+            scaleOverride : true,
+            scaleSteps : 10,
+            scaleStepWidth : 10
+		});
+
+		var ctx = document.getElementById("ram_canvas").getContext("2d");
+		window.myLine = new Chart(ctx).Line(ram_chart, {
+			responsive: true,
+            scaleOverride : true,
+            scaleSteps : 10,
+            scaleStepWidth : 10
+            });
+
+		var ctx = document.getElementById("disk_canvas").getContext("2d");
+		window.myLine = new Chart(ctx).Line(disk_chart, {
+			responsive: true,
+            scaleOverride : true,
+            scaleSteps : 10,
+            scaleStepWidth : 10
+            });
+
+		var ctx = document.getElementById("disk_read_canvas").getContext("2d");
+		window.myLine = new Chart(ctx).Line(disk_read_chart, {
+			responsive: true
+            });
+
+		var ctx = document.getElementById("disk_write_canvas").getContext("2d");
+		window.myLine = new Chart(ctx).Line(disk_write_chart, {
+			responsive: true
+            });
+
+		var ctx = document.getElementById("total_packets_canvas").getContext("2d");
+		window.myLine = new Chart(ctx).Line(total_packets_chart, {
+			responsive: true
+            });
+	};
+
+	</script>
 </body>
 </html>
