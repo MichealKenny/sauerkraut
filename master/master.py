@@ -50,7 +50,7 @@ def get_server_status(server):
     global red
 
     try:
-        health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.01, verify=False).json()
+        health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.4, verify=False).json()
         cpu = health['cpu']
         ram = health['ram']
 
@@ -61,14 +61,14 @@ def get_server_status(server):
             icon = 'green.png'
             green += 1
 
-        row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}' \
+        row = '<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}' \
               '%</td><td><img src="images/{icon}"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2], cpu=str(cpu), ram=str(ram), icon=icon)
 
         return row
 
     except (exceptions.RequestException, ValueError):
-        row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
+        row = '<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
               '</td><td><img src="images/red.png"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2])
         red += 1
@@ -76,7 +76,7 @@ def get_server_status(server):
         return row
 
     except KeyError:
-        row = '<tr><td><a href="server/{name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
+        row = '<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
               '</td><td>Not Auth</td><td><a href="remove-server?server={name}">X</a></td></tr>'\
             .format(name=server[0], host=server[1], port=server[2])
         red += 1
@@ -162,7 +162,6 @@ def index():
         page = pool.map(get_server_status, servers)
         pool.close()
 
-    print(green, yellow, red)
     return template(html, {'body': ''.join(page), 'username':current_user(), 'green': green, 'yellow': yellow, 'red': red})
 
 
@@ -236,10 +235,15 @@ def remove_server():
     redirect(url + '/')
 
 
-@route('/server/<name>')
-def server(name):
+@route('/server')
+def server():
     if not authorized():
         redirect(url + '/login')
+
+    name = request.query.server
+    interval = request.query.graphs
+    if not interval:
+        interval = 120
 
     try:
         html = open('html/server.html', 'r').read()
@@ -254,6 +258,9 @@ def server(name):
 
 
         data = log.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()
+        data = data[-int(interval):]
+        print(len(data))
+
         for row in data:
             cpu_total += float(row[2])
             ram_total += float(row[3])
@@ -494,7 +501,8 @@ if __name__ == '__main__':
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
 
         config = json.dumps({'secret': '05d1ce01dc52e88bf61286994837c82c8fa5089e', 'key': 'cabbage',
-                             'host': input('Host: '), 'port': int(input('Port: '))}, indent=4)
+                             'host': input('Host: '), 'url': input('URL: '),
+                             'port': int(input('Port: '))}, indent=4)
 
         config_file = open('config.json', 'w+')
         config_file.write(config)
@@ -548,8 +556,9 @@ if __name__ == '__main__':
     key = config['key']
     host = config['host']
     port = config['port']
+    ext = config['url']
 
-    url = 'https://{0}:{1}'.format(host, str(port))
+    url = 'https://{0}:{1}'.format(ext, str(port))
 
     print('https://{0}:{1}/'.format(host, port))
     srv = SSLWSGIRefServer(host=host, port=port)

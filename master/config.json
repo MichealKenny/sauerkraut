@@ -2,5 +2,6 @@
     "key": "cabbage",
     "port": 8883,
     "secret": "05d1ce01dc52e88bf61286994837c82c8fa5089e",
-    "host": "localhost"
+    "host": "localhost",
+    "url": "localhost"
 }

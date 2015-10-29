@@ -33,7 +33,7 @@ while True:
                             server[0], health['cpu'], health['ram'], health['disk_usage'],
                             health['disk_read'], health['disk_write'], health['total_packets']))
 
-    trim_logs(int(len(servers)) * 120)
+    trim_logs(int(len(servers)) * 17000)
     logs_db.commit()
     sleep(5)
 
