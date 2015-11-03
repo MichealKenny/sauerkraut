@@ -1,4 +1,5 @@
-from bottle import route, run, request, ServerAdapter
+from bottle import route, run, request, ServerAdapter, response
+from subprocess import call, check_output
 import psutil
 import json
 import os
@@ -39,6 +40,20 @@ def extended():
 
         return {'cpu': cpu, 'ram': ram, 'disk_usage': disk_usage, 'disk_read': disk_read,
                 'disk_write': disk_write, 'total_packets': total_packets}
+
+    else:
+        return {'error': 'Not Authorized'}
+
+
+@route('/execute', method='POST')
+def execute():
+    if authorized():
+        command = request.forms.get('command')
+        path = request.forms.get('command')
+
+        output = check_output(command)
+
+        return {'output': str(output), 'error': None}
 
     else:
         return {'error': 'Not Authorized'}

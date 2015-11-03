@@ -2,10 +2,8 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Sauerkraut - Event Viewer</title>
+    <title>Sauerkraut - Custom Config</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
-    <script type="text/javascript" src="/js/jquery.js"></script>
-    <script type="text/javascript" src="/js/chart.js"></script>
 </head>
 <body>
     <div class="header">
@@ -24,22 +22,16 @@
 
     </div>
     <div class="body">
-        <h3>Event Viewer</h3>
-        <input type="text" id="search" style="width: 95%;box-sizing: border-box;" placeholder="Filter Events">
-        <table id="table" style="width: 95%;text-align: center;">
-            <thead>
-            <tr>
-                <th>Event</th>
-                <th>Event Type</th>
-                <th>User</th>
-                <th>Timestamp (UTC)</th>
-            </tr>
-            </thead>
-            <tbody>
-                {{!body}}
-            </tbody>
-        </table>
+        <h2>Custom Config</h2>
+        <form action="execute" method="post">
+            <input type="text" name="command" placeholder="Command to run"><br>
+            <input type="text" name="path" placeholder="Execution path"><br>
+            Execute On:<br>
+            <select name="selection" multiple style="width: 150px;">
+                {{!options}}
+            </select><br>
+            <input type="submit" value="Submit">
+         </form>
     </div>
 </body>
-<script type="text/javascript" src="/js/filter.js"></script>
 </html>

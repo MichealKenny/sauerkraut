@@ -1,6 +1,6 @@
 from bottle import ServerAdapter, route, run, static_file, request, response, redirect, template
 from multiprocessing.dummy import Pool
-from requests import get, exceptions
+from requests import get, post, exceptions
 from datetime import datetime
 import hashlib, uuid
 import sqlite3
@@ -454,6 +454,46 @@ def event_viewer():
 
     return template(html, body=page, username=current_user())
 
+
+@route('/quick-config')
+def quick_config():
+    if not authorized():
+        redirect(url + '/login')
+
+    html = open('html/quick-config.html', 'r').read()
+    return template(html, username=current_user())
+
+
+@route('/custom-config')
+def custom_config():
+    if not authorized():
+        redirect(url + '/login')
+
+    html = open('html/custom-config.html', 'r').read()
+    options = ''
+
+    servers = db.execute('SELECT * FROM servers').fetchall()
+
+    for server in servers:
+        options += '<option value="{name}">{name}</option>'.format(name=server[0])
+
+    return template(html, options=options, username=current_user())
+
+
+@route('/execute', method='POST')
+def execute():
+    if not authorized():
+        redirect(url + '/login')
+
+    payload = {'command': request.forms.get('command'), 'path': request.forms.get('path')}
+
+    for server in request.forms.getall('selection'):
+        server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
+        address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
+        req = post(address, data=payload, verify=False)
+        print(req.json()['output'])
+
+    redirect(url + '/custom-config#success')
 
 @route('/images/<name>')
 def images(name):
