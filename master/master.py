@@ -241,9 +241,7 @@ def server():
         redirect(url + '/login')
 
     name = request.query.server
-    interval = request.query.graphs
-    if not interval:
-        interval = 120
+    interval = request.query.plots or 120
 
     try:
         html = open('html/server.html', 'r').read()
@@ -436,7 +434,8 @@ def remove_user():
 
 @route('/denied')
 def denied():
-    return 'You lack the required permission to perform this action'
+    response.status = 401
+    return '<h2>401 Unauthorized</h2><p>You lack the required permission to perform this action<p>'
 
 
 @route('/manage/event-viewer')
