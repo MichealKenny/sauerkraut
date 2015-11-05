@@ -459,6 +459,9 @@ def quick_config():
     if not authorized():
         redirect(url + '/login')
 
+    if not admin():
+        redirect(url + '/denied')
+
     html = open('html/quick-config.html', 'r').read()
     return template(html, username=current_user())
 
@@ -468,6 +471,9 @@ def custom_config():
     if not authorized():
         redirect(url + '/login')
 
+    if not admin():
+        redirect(url + '/denied')
+
     html = open('html/custom-config.html', 'r').read()
     options = ''
 
@@ -476,23 +482,43 @@ def custom_config():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, options=options, username=current_user())
+    return template(html, options=options, username=current_user(), output='')
 
 
-@route('/execute', method='POST')
-def execute():
+@route('/custom-config', method='POST')
+def custom_config_execute():
     if not authorized():
         redirect(url + '/login')
 
+    if not admin():
+        redirect(url + '/denied')
+
     payload = {'command': request.forms.get('command'), 'path': request.forms.get('path')}
+    output = {}
 
     for server in request.forms.getall('selection'):
         server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
         address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
         req = post(address, data=payload, verify=False)
-        print(req.json()['output'])
+        output[server] = req.json()['output']
 
-    redirect(url + '/custom-config#success')
+    page = ''
+
+    for item in output:
+        page += '<h4>{0}</h4><p style="font-size: 10px;">{1}</p>'.format(item, output[item].replace('\n', '<br>'))
+
+    html = open('html/custom-config.html', 'r').read()
+    options = ''
+
+    servers = db.execute('SELECT * FROM servers').fetchall()
+
+    for server in servers:
+        options += '<option value="{name}">{name}</option>'.format(name=server[0])
+
+    return template(html, options=options, username=current_user(), output=page)
+
+
+
 
 @route('/images/<name>')
 def images(name):
