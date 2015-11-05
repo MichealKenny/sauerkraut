@@ -24,10 +24,14 @@
     <div class="body">
         <h3>Add Server:</h3>
          <form action="add" method="post">
-            <input type="text" name="name" placeholder="Name"><br>
-            <input type="text" name="host" placeholder="Domain/IP"><br>
-             <input type="text" name="port" placeholder="Port"><br>
-            <input type="submit" value="Submit">
+            <input type="text" name="name" placeholder="Name" style="width: 250px;"><br><br>
+            <input type="text" name="host" placeholder="Domain/IP" style="width: 250px;"><br><br>
+             <input type="text" name="port" placeholder="Port" style="width: 250px;"><br><br>
+             <div align="center" style="width: 250px">
+             <input type="checkbox" name="validate" checked> Validate
+                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="submit" value="Add Server">
+            </div>
          </form>
         <div class="error notification" id="invalid-server" align="center">The given server is either down or is not running the Sauerkraut slave software.</div>
         <div class="error notification" id="no-servers" align="center">There are no slaves in the database, please add a Sauerkraut slave.</div>

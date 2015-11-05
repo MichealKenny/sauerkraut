@@ -24,15 +24,15 @@
     <div class="body">
         <h3>Create a new user:</h3>
          <form action="/manage/new-user" method="post">
-            <input type="text" name="username" placeholder="Username"><br>
-            <input type="password" name="password" placeholder="Password"><br>
-            <input type="password" name="password-confirm" placeholder="Confirm Password"><br>
-            Permissions level:
-            <select name="perms">
+            <input type="text" name="username" placeholder="Username" style="width: 250px;"><br><br>
+            <input type="password" name="password" placeholder="Password" style="width: 250px;"><br><br>
+            <input type="password" name="password-confirm" placeholder="Confirm Password" style="width: 250px;"><br><br>
+            <select name="perms" style="width: 250px;">
+                <option value="" disabled selected>Permissions level</option>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
-            </select>
-            <input type="submit" value="Submit">
+            </select><br><br>
+            <input type="submit" value="Create User" style="width: 250px;">
          </form>
         <div class="error notification" id="pass-invalid" align="center">The given password didn't match the verification.</div>
         <div class="error notification" id="invalid-username" align="center">Username should be at least 4 characters long and shouldn't contain any special characters.</div>

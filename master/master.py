@@ -118,7 +118,7 @@ def auth():
 
     if create_hash(password, entry[2])[0] == entry[1]:
         data = json.dumps({'username': username, 'key': key})
-        response.set_cookie(name='sauerkraut', value=data, secret=secret, max_age=1000, secure=True)
+        response.set_cookie(name='sauerkraut', value=data, secret=secret, secure=True)
 
         last = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         db.execute("UPDATE accounts SET last='{0}' WHERE username='{1}'".format(last, username))
@@ -188,12 +188,14 @@ def add_server():
     name = request.forms.get('name').lower()
     host = request.forms.get('host')
     port = request.forms.get('port')
+    validate = request.forms.get('validate')
 
-    try:
-        get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
+    if validate:
+        try:
+            get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
 
-    except:
-        redirect(url + '/add#invalid-server')
+        except:
+            redirect(url + '/add#invalid-server')
 
     if len(name) < 4:
         redirect(url + '/add#invalid-name')
@@ -482,7 +484,7 @@ def custom_config():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, options=options, username=current_user(), output='')
+    return template(html, options=options, username=current_user(), output='', output_box_css='')
 
 
 @route('/custom-config', method='POST')
@@ -493,8 +495,13 @@ def custom_config_execute():
     if not admin():
         redirect(url + '/denied')
 
-    payload = {'command': request.forms.get('command'), 'path': request.forms.get('path')}
+    type = request.forms.get('type')
+    payload = {'command': request.forms.get('command'),
+               'path': request.forms.get('path'),
+               'type': type}
+
     output = {}
+    return_output = request.forms.get('output')
 
     for server in request.forms.getall('selection'):
         server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
@@ -503,9 +510,12 @@ def custom_config_execute():
         output[server] = req.json()['output']
 
     page = ''
+    output_box_css = ''
 
-    for item in output:
-        page += '<h4>{0}</h4><p style="font-size: 10px;">{1}</p>'.format(item, output[item].replace('\n', '<br>'))
+    if return_output and type == 'non-blocking':
+        output_box_css = 'border: 1px solid gray;padding-left: 25px;'
+        for item in output:
+            page += '<h4>{0}</h4><p style="font-size: 10px;">{1}</p>'.format(item, output[item].replace('\n', '<br>'))
 
     html = open('html/custom-config.html', 'r').read()
     options = ''
@@ -515,7 +525,8 @@ def custom_config_execute():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, options=options, username=current_user(), output=page)
+    return template(html, options=options, username=current_user(), output=page,
+                    output_box_css=output_box_css)
 
 
 

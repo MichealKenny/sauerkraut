@@ -24,15 +24,20 @@
     <div class="body">
         <h2>Custom Config</h2>
         <form action="custom-config" method="post">
-            <input type="text" name="command" placeholder="Command to run"><br>
-            <input type="text" name="path" placeholder="Execution path"><br>
+            <input type="text" name="command" placeholder="Command to run" style="width: 400px;box-sizing: border-box;"><br><br>
+            <input type="text" name="path" placeholder="Execution path (Optional)" style="width: 400px;box-sizing: border-box;"><br><br>
+            <div style="position: absolute;left: 420px;top: 48px; ">
             Execute On:<br>
-            <select name="selection" multiple style="width: 150px;">
+            <select name="selection" multiple style="width: 400px;height: 200px;font-size: 19px;">
                 {{!options}}
-            </select><br>
-            <input type="submit" value="Submit">
+            </select></div>
+            <div style="position: absolute;top: 165px; left: 85px;" align="center">
+            <input type="radio" name="type" value="blocking">Blocking <input type="radio" name="type" value="non-blocking" checked>Non-Blocking<br>
+            <input type="checkbox" name="output" checked> Return Command Output<br><br>
+            <input type="submit" value="Execute"></div>
          </form>
-        {{!output}}
+        <div style="position: absolute; top: 300px; width: 793px;height: 400px;overflow: auto;{{!output_box_css}}">
+        {{!output}}</div>
     </div>
 </body>
 </html>

@@ -51,9 +51,13 @@ def execute():
         command = request.forms.get('command')
         path = request.forms.get('command')
 
-        output = check_output(command).decode()
+        try:
+            output = check_output(command).decode()
 
-        return {'output': output, 'error': None}
+        except:
+            return {'output': 'Error executing command'}
+
+        return {'output': output}
 
     else:
         return {'error': 'Not Authorized'}
