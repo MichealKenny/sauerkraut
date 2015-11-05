@@ -114,6 +114,9 @@ def auth():
         entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username)).fetchall()[0]
 
     except IndexError:
+        log.execute("INSERT INTO events VALUES ('User {0} attempted to login from {2}','Invalid Login','{0}','{1}')"
+                    .format(username, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), request.remote_addr))
+
         redirect(url + '/login#invalid-login')
 
     if create_hash(password, entry[2])[0] == entry[1]:
@@ -124,8 +127,8 @@ def auth():
         db.execute("UPDATE accounts SET last='{0}' WHERE username='{1}'".format(last, username))
         master_db.commit()
 
-        log.execute("INSERT INTO events VALUES ('User {0} logged in','Login','{0}','{1}')"
-            .format(username, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+        log.execute("INSERT INTO events VALUES ('User {0} logged in from {2}','Login','{0}','{1}')"
+                    .format(username, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), request.remote_addr))
         logs_db.commit()
 
         if (username, password) == ('admin', 'admin'):
@@ -135,6 +138,8 @@ def auth():
             redirect(url + '/')
 
     else:
+        log.execute("INSERT INTO events VALUES ('User {0} attempted to login from {2}','Invalid Login','{0}','{1}')"
+                    .format(username, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), request.remote_addr))
         redirect(url + '/login#invalid-login')
 
 
