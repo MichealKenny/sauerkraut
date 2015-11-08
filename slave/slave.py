@@ -100,6 +100,19 @@ class SSLWSGIRefServer(ServerAdapter):
 
 if __name__ == '__main__':
     print('Sauerkraut Slave')
+
+    if not os.path.isfile('slave.pem'):
+        try:
+            os.system("openssl req -new -x509 -keyout slave.pem -out slave.pem -days"
+                      " 365 -nodes -subj '/C=IE/ST=Connaught/L=Galway/CN=Sauerkraut'")
+
+            print('Generated slave.pem x509 certificate')
+
+        except:
+            print('Sauerkraut requires an x509 openssl generated slave.pem file, could not auto generate.')
+            print('Generate with: openssl req -new -x509 -keyout slave.pem -out slave.pem -days 365 -nodes')
+            quit()
+
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
 
@@ -118,7 +131,7 @@ if __name__ == '__main__':
 
     master_ip = config['master_ip']
     host = config['host']
-    port = config['port']
+    port = int(os.sys.argv[1]) or config['port']
 
     srv = SSLWSGIRefServer(host=host, port=port)
     run(server=srv)

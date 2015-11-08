@@ -573,9 +573,16 @@ if __name__ == '__main__':
         os.mkdir('dbs')
 
     if not os.path.isfile('master.pem'):
-        print('Sauerkraut requires an openssl generated master.pem file')
-        print('Generate with: openssl req -new -x509 -keyout master.pem -out master.pem -days 365 -nodes')
-        quit()
+        try:
+            os.system("openssl req -new -x509 -keyout master.pem -out master.pem -days"
+                      " 365 -nodes -subj '/C=IE/ST=Connaught/L=Galway/CN=Sauerkraut'")
+
+            print('Generated master.pem x509 certificate')
+
+        except:
+            print('Sauerkraut requires an x509 openssl generated master.pem file, could not auto generate.')
+            print('Generate with: openssl req -new -x509 -keyout master.pem -out master.pem -days 365 -nodes')
+            quit()
 
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
