@@ -131,7 +131,11 @@ if __name__ == '__main__':
 
     master_ip = config['master_ip']
     host = config['host']
-    port = int(os.sys.argv[1]) or config['port']
+    try:
+        port = int(os.sys.argv[1])
+
+    except:
+        port = config['port']
 
     srv = SSLWSGIRefServer(host=host, port=port)
     run(server=srv)
