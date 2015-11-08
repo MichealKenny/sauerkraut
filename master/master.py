@@ -1,6 +1,6 @@
 from bottle import ServerAdapter, route, run, static_file, request, response, redirect, template
 from multiprocessing.dummy import Pool
-from requests import get, post, exceptions
+from requests import get, post, exceptions, packages
 from datetime import datetime
 import hashlib, uuid
 import sqlite3
@@ -264,8 +264,6 @@ def server():
 
         data = log.execute("SELECT * FROM servers WHERE name = '{0}'".format(name)).fetchall()
         data = data[-int(interval):]
-        print(len(data))
-
         for row in data:
             cpu_total += float(row[2])
             ram_total += float(row[3])
@@ -276,7 +274,8 @@ def server():
 
             count += 1
             avg_count += 1
-            avg = len(data) / 10
+
+            avg = len(data) / 9
 
             if count > avg:
                 labels += '"' + row[0][-8:] + '",'
@@ -643,4 +642,5 @@ if __name__ == '__main__':
 
     print('https://{0}:{1}/'.format(host, port))
     srv = SSLWSGIRefServer(host=host, port=port)
+    packages.urllib3.disable_warnings()
     run(server=srv)

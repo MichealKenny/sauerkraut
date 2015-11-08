@@ -1,5 +1,5 @@
-from bottle import route, run, request, ServerAdapter, response
-from subprocess import call, check_output
+from bottle import route, run, request, ServerAdapter
+from subprocess import Popen, check_output
 import psutil
 import json
 import os
@@ -48,16 +48,36 @@ def extended():
 @route('/execute', method='POST')
 def execute():
     if authorized():
-        command = request.forms.get('command')
-        path = request.forms.get('command')
+        command = request.forms.get('command').split()
+        path = request.forms.get('path')
+        type = request.forms.get('type')
 
-        try:
-            output = check_output(command).decode()
+        if type == 'blocking':
+            try:
+                if path:
+                    Popen(command, cwd=path, shell=True)
 
-        except:
-            return {'output': 'Error executing command'}
+                else:
+                    Popen(command, shell=True)
 
-        return {'output': output}
+                return {'output': 'Command spawned.'}
+
+            except:
+                return {'output': 'Error executing command'}
+
+        else:
+
+            try:
+                if path:
+                    output = check_output(command, cwd=path, shell=True).decode()
+
+                else:
+                    output = check_output(command, shell=True).decode()
+
+            except:
+                return {'output': 'Error executing command'}
+
+            return {'output': output}
 
     else:
         return {'error': 'Not Authorized'}
