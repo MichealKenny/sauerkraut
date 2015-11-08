@@ -1,5 +1,5 @@
 from datetime import datetime
-from requests import get
+from requests import get, packages
 from time import sleep
 import sqlite3
 
@@ -16,6 +16,8 @@ def trim_logs(length):
 
     log.execute("DELETE FROM events WHERE ROWID IN (SELECT ROWID FROM "
                 "events ORDER BY ROWID DESC LIMIT -1 OFFSET 2500)")
+
+packages.urllib3.disable_warnings()
 
 print('Collecting..')
 while True:
