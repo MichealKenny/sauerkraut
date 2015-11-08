@@ -1,3 +1,7 @@
 .idea/
 master/alter_table.py
 master/dbs/
+master/config.json
+master/master.pem
+slave/config.json
+slave/slave.pem
