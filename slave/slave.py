@@ -48,7 +48,7 @@ def extended():
 @route('/execute', method='POST')
 def execute():
     if authorized():
-        command = request.forms.get('command').split()
+        command = request.forms.get('command')
         path = request.forms.get('path')
         type = request.forms.get('type')
 
