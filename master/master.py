@@ -492,22 +492,22 @@ def quick_config_execute():
     if config == 'install':
         payload = {'command': 'apt-get install -y ' + request.forms.get('install-package'),
                    'path': None,
-                   'type': 'blocking'}
+                   'type': 'non-blocking'}
 
     elif config == 'update':
         payload = {'command': 'apt-get install --only-upgrade -y ' + request.forms.get('update-package'),
                    'path': None,
-                   'type': 'blocking'}
+                   'type': 'non-blocking'}
 
     elif config == 'remove':
         payload = {'command': 'apt-get remove -y ' + request.forms.get('remove-package'),
                    'path': None,
-                   'type': 'blocking'}
+                   'type': 'non-blocking'}
 
     elif config == 'update-all':
         payload = {'command': 'apt-get update && apt-get upgrade',
                    'path': None,
-                   'type': 'blocking'}
+                   'type': 'non-blocking'}
 
     elif config == 'list-all':
         payload = {'command': 'dpkg -l',
