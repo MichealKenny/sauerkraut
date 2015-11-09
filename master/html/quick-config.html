@@ -23,7 +23,36 @@
     </div>
     <div class="body">
         <h2>Quick Config</h2>
-        
+        <form action="quick-config" method="post">
+                <div style="border: 1px solid gray;width: 390px;padding-left: 20px;">
+                    <h4>Package Management</h4>
+                    <input type="radio" name="config" value="install">Install Package:<input type="text" name="install-package" placeholder="Name of Package" style="width: 200px;box-sizing: border-box;position: relative;left:25px;"><br><br>
+                    <input type="radio" name="config" value="update">Update Package:<input type="text" name="update-package" placeholder="Name of Package" style="width: 200px;box-sizing: border-box;position: relative;left:17px;"><br><br>
+                    <input type="radio" name="config" value="remove">Remove Package:<input type="text" name="remove-package" placeholder="Name of Package" style="width: 200px;box-sizing: border-box;position: relative;left:12px;"><br><br>
+                    <input type="radio" name="config" value="update-all">Update all packages<br><br>
+                    <input type="radio" name="config" value="list-all">List all packages<br><br>
+                </div>
+            <div style="border: 1px solid gray;width: 180px;padding-left: 20px;position: absolute;left: 440px;top:68px;">
+                <h4>Power Management</h4>
+                <input type="radio" name="config" value="shutdown">Shutdown server<br><br>
+                <input type="radio" name="config" value="restart">Restart server<br><br>
+            </div>
+            <div style="border: 1px solid gray;width: 180px;padding-left: 20px;position: absolute;left: 440px;top:236px;">
+                <h4>Crontab Management</h4>
+                <input type="radio" name="config" value="list-cronjobs">List jobs<br><br>
+            </div>
+            <div style="position: absolute;top:370px;">Execute On:<br>
+            <select name="selection" multiple style="width: 410px;height: 100px;font-size: 19px;">
+                {{!options}}
+            </select><br>
+            </div>
+            <div align="center" style="position: absolute;top:385px;left: 440px;width: 200px; height: 97px;font-size: 10px;">
+                <p>WARNING: All of these Quick Config commands were built for Debian, if you have a non-Debian slave, don't use Quick Config.</p>
+            <input type="submit" value="Execute" style="width: 150px;">
+            </div>
+            <div style="position: absolute; top: 520px; width: 641px; bottom: 35px;overflow: auto;{{!output_box_css}}">{{!output}}</div>
+         </form>
+        <br><br>
     </div>
 </body>
 </html>
