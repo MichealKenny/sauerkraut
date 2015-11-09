@@ -25,7 +25,7 @@ while True:
     servers = db.execute("SELECT * FROM servers").fetchall()
     for server in servers:
         try:
-            health = get('https://{host}:{port}/extended'.format(host=server[1], port=server[2]), timeout=0.1, verify=False).json()
+            health = get('https://{host}:{port}/extended'.format(host=server[1], port=server[2]), timeout=0.4, verify=False).json()
 
         except:
             health = {'cpu': 0, 'ram': 0, 'disk_usage': 0, 'disk_read': 0, 'disk_write': 0, 'total_packets': 0}
