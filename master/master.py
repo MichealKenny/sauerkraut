@@ -490,17 +490,17 @@ def quick_config_execute():
     config = request.forms.get('config')
 
     if config == 'install':
-        payload = {'command': 'apt-get install' + request.forms.get('install-package'),
+        payload = {'command': 'apt-get install -y ' + request.forms.get('install-package'),
                    'path': None,
                    'type': 'blocking'}
 
     elif config == 'update':
-        payload = {'command': 'apt-get install --only-upgrade' + request.forms.get('update-package'),
+        payload = {'command': 'apt-get install --only-upgrade -y ' + request.forms.get('update-package'),
                    'path': None,
                    'type': 'blocking'}
 
     elif config == 'remove':
-        payload = {'command': 'apt-get remove' + request.forms.get('remove-package'),
+        payload = {'command': 'apt-get remove -y ' + request.forms.get('remove-package'),
                    'path': None,
                    'type': 'blocking'}
 
