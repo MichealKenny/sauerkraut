@@ -1,16 +1,21 @@
 from bottle import route, run, request, ServerAdapter
 from subprocess import Popen, check_output
+from socket import gethostbyname
 import psutil
 import json
 import os
 
 
 def authorized():
-    if request.remote_addr == master_ip:
-        return True
+    if master_ip:
+        if request.remote_addr == master_ip:
+            return True
+
+        else:
+            return False
 
     else:
-        return False
+        return True
 
 @route('/')
 def index():
@@ -116,8 +121,13 @@ if __name__ == '__main__':
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
 
-        config = json.dumps({'host': input('Host: '), 'port': int(input('Port: ')),
-                             'master_ip': input('Host of Master: ')}, indent=4)
+        host = input('Internal IP address/host [localhost]: ') or 'localhost'
+        port = input('Port [29547]: ') or '29547'
+        master_ip = input('This Sauerkraut slave will only accept requests from the following address\n'
+                          '(Sauerkraut Master IP address/host) [Accept all]: ') or None
+
+        config = json.dumps({'host': host, 'port': int(port),
+                             'master_ip': master_ip}, indent=4)
 
         config_file = open('config.json', 'w+')
         config_file.write(config)
@@ -130,6 +140,9 @@ if __name__ == '__main__':
     config_file.close()
 
     master_ip = config['master_ip']
+    if master_ip:
+        master_ip = gethostbyname(master_ip)
+
     host = config['host']
     try:
         port = int(os.sys.argv[1])

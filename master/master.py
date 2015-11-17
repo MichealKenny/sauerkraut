@@ -1,6 +1,7 @@
 from bottle import ServerAdapter, route, run, static_file, request, response, redirect, template
-from multiprocessing.dummy import Pool
 from requests import get, post, exceptions, packages
+from multiprocessing.dummy import Pool
+from socket import gethostbyname
 from datetime import datetime
 import hashlib, uuid
 import sqlite3
@@ -606,7 +607,7 @@ def custom_config_execute():
     if return_output and type == 'non-blocking':
         output_box_css = 'border: 1px solid gray;padding-left: 25px;'
         for item in output:
-            page += '<h4>{0}</h4><p style="font-size: 10px;">{1}</p>'.format(item, output[item].replace('\n', '<br>'))
+            page += '<h4>{0}</h4><pre>{1}</pre>'.format(item, output[item])
 
     html = open('html/custom-config.html', 'r').read()
     options = ''
@@ -674,9 +675,12 @@ if __name__ == '__main__':
     if not os.path.isfile('config.json'):
         print('========================================\n\nFresh Install, Please fill in the following details:\n')
 
-        config = json.dumps({'secret': '05d1ce01dc52e88bf61286994837c82c8fa5089e', 'key': 'cabbage',
-                             'host': input('Host: '), 'url': input('URL: '),
-                             'port': int(input('Port: '))}, indent=4)
+        host = input('Internal IP address/host [localhost]: ') or 'localhost'
+        url = input('External IP address/URL [{0}]: '.format(host)) or host
+        port = input('Port [443]: ') or '443'
+
+        config = json.dumps({'secret': uuid.uuid4().hex, 'key': uuid.uuid4().hex,
+                             'host': host, 'url': url, 'port': int(port)}, indent=4)
 
         config_file = open('config.json', 'w+')
         config_file.write(config)
@@ -728,13 +732,15 @@ if __name__ == '__main__':
 
     secret = config['secret']
     key = config['key']
-    host = config['host']
+    host = gethostbyname(config['host'])
     port = config['port']
     ext = config['url']
 
     url = 'https://{0}:{1}'.format(ext, str(port))
 
     print('https://{0}:{1}/'.format(host, port))
-    srv = SSLWSGIRefServer(host=host, port=port)
     packages.urllib3.disable_warnings()
+
+
+    srv = SSLWSGIRefServer(host=host, port=port)
     run(server=srv)
