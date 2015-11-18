@@ -62,24 +62,28 @@ def get_server_status(server):
             icon = 'green.png'
             green += 1
 
-        row = '<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>{cpu}%</td><td>{ram}' \
-              '%</td><td><img src="images/{icon}"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
+        row = '''<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}
+        </td><td>{cpu}%</td><td>{ram}%</td><td><img src="images/{icon}"></td><td>
+        <a onclick="return confirm('Are you sure you want to remove this server?')"
+         href="remove-server?server={name}">X</a></td></tr>'''\
             .format(name=server[0], host=server[1], port=server[2], cpu=str(cpu), ram=str(ram), icon=icon)
 
         return row
 
     except (exceptions.RequestException, ValueError):
-        row = '<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
-              '</td><td><img src="images/red.png"></td><td><a href="remove-server?server={name}">X</a></td></tr>'\
-            .format(name=server[0], host=server[1], port=server[2])
+        row = '''<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A</td><td>
+        <img src="images/red.png"></td><td><a onclick="return confirm('Are you sure you want to remove this server?')"
+         href="remove-server?server={name}">X</a></td></tr>'''.format(name=server[0], host=server[1], port=server[2])
+
         red += 1
 
         return row
 
     except KeyError:
-        row = '<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A' \
-              '</td><td>Not Auth</td><td><a href="remove-server?server={name}">X</a></td></tr>'\
-            .format(name=server[0], host=server[1], port=server[2])
+        row = '''<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td><td>N/A</td><td>N/A</td>
+        <td>Not Auth</td><td><a onclick="return confirm('Are you sure you want to remove this server?')"
+         href="remove-server?server={name}">X</a></td></tr>'''.format(name=server[0], host=server[1], port=server[2])
+
         red += 1
 
         return row
@@ -314,8 +318,10 @@ def manage():
     table = ''
 
     for entry in db.execute("SELECT * FROM accounts"):
-        table += '<tr><td>{name}</td><td>{perms}</td><td>{last}</td><td><a href="remove-user?username={name}">X</a>' \
-                 '</td></tr>'.format(name=entry[0], perms=entry[3], last=entry[4])
+        table += '''<tr><td>{name}</td><td>{perms}</td><td>{last}</td><td>
+        <a onclick="return confirm('Are you sure you want to remove this user?')"
+        href="remove-user?username={name}">X</a></td></tr>'''\
+            .format(name=entry[0], perms=entry[3], last=entry[4])
 
     html = open('html/manage.html', 'r').read()
     return template(html, username=current_user(), table=table)
