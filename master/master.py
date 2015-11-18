@@ -547,7 +547,7 @@ def quick_config_execute():
     if payload['type'] == 'non-blocking':
         output_box_css = 'border: 1px solid gray;padding-left: 25px;'
         for item in output:
-            page += '<h4>{0}</h4><p style="font-size: 10px;">{1}</p>'.format(item, output[item].replace('\n', '<br>'))
+            page += '<h4>{0}</h4><pre>{1}</pre>'.format(item, output[item])
 
     html = open('html/quick-config.html', 'r').read()
     options = ''
