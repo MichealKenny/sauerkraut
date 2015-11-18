@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <title>Sauerkraut - Quick Config</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/spin.js"></script>
+    <script>
+    var opts = {color: '#3DDCAD'};
+    $(document).ready(function() {
+      spinner_div = $('#spinner').get(0);
+      $("#execute").on('click', function(e) {
+          spinner = new Spinner(opts).spin(spinner_div);
+          $("#execute_div").children().fadeTo("fast", 0.5);
+      });
+    });
+    </script>
 </head>
 <body>
     <div class="header">
@@ -46,13 +58,15 @@
                 {{!options}}
             </select><br>
             </div>
-            <div align="center" style="position: absolute;top:385px;left: 440px;width: 200px; height: 97px;font-size: 10px;">
+            <div id="spinner" align="center" style="position: absolute;top:385px;left: 440px;width: 200px; height: 97px;font-size: 10px;"></div>
+            <div id="execute_div" align="center" style="position: absolute;top:385px;left: 440px;width: 200px; height: 97px;font-size: 10px;">
                 <p>WARNING: All of these Quick Config commands were built for Debian, if you have a non-Debian slave, don't use Quick Config.</p>
-            <input type="submit" value="Execute" style="width: 150px;">
+            <input id="execute" type="submit" value="Execute" style="width: 150px;">
             </div>
             <div style="position: absolute; top: 520px; width: 615px; bottom: 35px;min-height: 300px; overflow: auto;{{!output_box_css}}">{{!output}}</div>
          </form>
         <br><br>
     </div>
+<div style="position: fixed;top: 50%;left: 50%;"></div>
 </body>
 </html>

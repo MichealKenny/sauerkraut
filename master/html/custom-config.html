@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <title>Sauerkraut - Custom Config</title>
     <link rel="stylesheet" href="/css/stylesheet.css">
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/spin.js"></script>
+    <script>
+    var opts = {color: '#3DDCAD'};
+    $(document).ready(function() {
+      spinner_div = $('#spinner').get(0);
+      $("#execute").on('click', function(e) {
+          spinner = new Spinner(opts).spin(spinner_div);
+          $("#execute_div").children().fadeTo("fast", 0.5);
+      });
+    });
+    </script>
 </head>
 <body>
     <div class="header">
@@ -31,10 +43,12 @@
             <select name="selection" multiple style="width: 400px;height: 200px;font-size: 19px;">
                 {{!options}}
             </select></div>
-            <div style="position: absolute;top: 165px; left: 85px;" align="center">
-            <input type="radio" name="type" value="blocking">Blocking <input type="radio" name="type" value="non-blocking" checked>Non-Blocking<br>
-            <input type="checkbox" name="output" checked> Return Command Output<br><br>
-            <input type="submit" value="Execute"></div>
+            <div id="spinner" style="position: absolute;top: 165px; left: 85px;width: 203px; height: 85px;" align="center"></div>
+            <div id="execute_div" style="position: absolute;top: 165px; left: 85px;width: 203px; height: 85px;" align="center">
+            <input type="radio" name="type" value="blocking"><p style="margin: 0;padding: 0;display:inline;">Blocking</p>
+            <input type="radio" name="type" value="non-blocking" checked><p style="margin: 0;padding: 0;display:inline;">Non-Blocking</p><br>
+            <input type="checkbox" name="output" checked><p style="margin: 0;padding: 0;display:inline;">Return Command Output</p><br><br>
+            <input id="execute" type="submit" value="Execute"></div>
          </form>
         <div style="position: absolute; top: 300px; width: 793px;bottom: 35px;min-height: 300px;overflow: auto;{{!output_box_css}}">
         {{!output}}</div>
