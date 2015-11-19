@@ -540,12 +540,20 @@ def quick_config_execute():
         redirect(url + '/quick-config')
 
     output = {}
+    selected_servers = request.forms.getall('selection')
 
-    for server in request.forms.getall('selection'):
-        server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
-        address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
-        req = post(address, data=payload, verify=False)
-        output[server] = req.json()['output']
+    if len(selected_servers) == 0:
+        output['Error'] = 'No server selected.'
+
+    for server in selected_servers:
+        try:
+            server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
+            address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
+            req = post(address, data=payload, verify=False)
+            output[server] = req.json()['output']
+
+        except exceptions.RequestException:
+            output[server] = 'Error: Slave is down.'
 
     page = ''
     output_box_css = ''
@@ -600,12 +608,20 @@ def custom_config_execute():
 
     output = {}
     return_output = request.forms.get('output')
+    selected_servers = request.forms.getall('selection')
 
-    for server in request.forms.getall('selection'):
-        server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
-        address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
-        req = post(address, data=payload, verify=False)
-        output[server] = req.json()['output']
+    if len(selected_servers) == 0:
+        output['Error'] = 'No server selected.'
+
+    for server in selected_servers:
+        try:
+            server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
+            address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
+            req = post(address, data=payload, verify=False)
+            output[server] = req.json()['output']
+
+        except exceptions.RequestException:
+            output[server] = 'Error: Slave is down.'
 
     page = ''
     output_box_css = ''

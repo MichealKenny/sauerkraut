@@ -12,7 +12,9 @@
       spinner_div = $('#spinner').get(0);
       $("#execute").on('click', function(e) {
           spinner = new Spinner(opts).spin(spinner_div);
-          $("#execute_div").children().fadeTo("fast", 0.5);
+          $("#execute_div").children().fadeTo("fast", 0.2);
+          var input = this;
+          input.disabled = true;
       });
     });
     </script>
