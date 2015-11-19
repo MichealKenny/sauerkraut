@@ -10,12 +10,25 @@
     var opts = {color: '#3DDCAD'};
     $(document).ready(function() {
       spinner_div = $('#spinner').get(0);
-      $("#execute").on('click', function(e) {
+      $("#execute").click(function() {
           spinner = new Spinner(opts).spin(spinner_div);
           $("#execute_div").children().fadeTo("fast", 0.2);
-          var input = this;
-          input.disabled = true;
+          $("#execute").disabled = true;
+          $("#blocking").disabled = true;
+          $("#non-blocking").disabled = true;
+          $("#output").disabled = true;
+          $('#config-form').submit();
       });
+        $('#blocking').click(function() {
+            $('#output').attr({
+                'checked': false,
+                'disabled': true
+            });
+        });
+        $('#non-blocking').click(function() {
+            $('#output').attr({'disabled': false});
+            $('#output').get(0).checked = true;
+        });
     });
     </script>
 </head>
@@ -37,7 +50,7 @@
     </div>
     <div class="body">
         <h2>Custom Config</h2>
-        <form action="custom-config" method="post">
+        <form id="config-form" action="custom-config" method="post">
             <input type="text" name="command" placeholder="Command to run" style="width: 400px;box-sizing: border-box;"><br><br>
             <input type="text" name="path" placeholder="Execution path (Optional)" style="width: 400px;box-sizing: border-box;"><br><br>
             <div style="position: absolute;left: 420px;top: 48px; ">
@@ -47,9 +60,9 @@
             </select></div>
             <div id="spinner" style="position: absolute;top: 165px; left: 85px;width: 203px; height: 85px;" align="center"></div>
             <div id="execute_div" style="position: absolute;top: 165px; left: 85px;width: 203px; height: 85px;" align="center">
-            <input type="radio" name="type" value="blocking"><p style="margin: 0;padding: 0;display:inline;">Blocking</p>
-            <input type="radio" name="type" value="non-blocking" checked><p style="margin: 0;padding: 0;display:inline;">Non-Blocking</p><br>
-            <input type="checkbox" name="output" checked><p style="margin: 0;padding: 0;display:inline;">Return Command Output</p><br><br>
+            <input id="blocking" type="radio" name="type" value="blocking"><p style="margin: 0;padding: 0;display:inline;">Blocking</p>
+            <input id="non-blocking" type="radio" name="type" value="non-blocking" checked><p style="margin: 0;padding: 0;display:inline;">Non-Blocking</p><br>
+            <input id="output" type="checkbox" name="output" checked><p style="margin: 0;padding: 0;display:inline;">Return Command Output</p><br><br>
             <input id="execute" type="submit" value="Execute"></div>
          </form>
         <div style="position: absolute; top: 300px; width: 793px;bottom: 35px;min-height: 300px;overflow: auto;{{!output_box_css}}">

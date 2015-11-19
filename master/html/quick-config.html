@@ -13,8 +13,8 @@
       $("#execute").on('click', function(e) {
           spinner = new Spinner(opts).spin(spinner_div);
           $("#execute_div").children().fadeTo("fast", 0.2);
-          var input = this;
-          input.disabled = true;
+          $("#execute").disabled = true;
+          $('#config-form').submit();
       });
     });
     </script>
@@ -37,7 +37,7 @@
     </div>
     <div class="body">
         <h2>Quick Config</h2>
-        <form action="quick-config" method="post">
+        <form id="config-form" action="quick-config" method="post">
                 <div style="border: 1px solid gray;width: 390px;padding-left: 20px;">
                     <h4>Package Management</h4>
                     <input type="radio" name="config" value="install">Install Package:<input type="text" name="install-package" placeholder="Name of Package" style="width: 200px;box-sizing: border-box;position: relative;left:25px;"><br><br>
