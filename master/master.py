@@ -89,6 +89,17 @@ def get_server_status(server):
         return row
 
 
+def send_command(data):
+    server, payload = data
+
+    try:
+        address = 'https://{0}:{1}/execute'.format(server[1], server[2])
+        req = post(address, data=payload, verify=False)
+        return server[0], req.json()['output']
+
+    except exceptions.RequestException:
+        return server[0], 'Error: Slave is down.'
+
 
 @route('/login')
 def login():
@@ -545,15 +556,18 @@ def quick_config_execute():
     if len(selected_servers) == 0:
         output['Error'] = 'No server selected.'
 
-    for server in selected_servers:
-        try:
-            server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
-            address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
-            req = post(address, data=payload, verify=False)
-            output[server] = req.json()['output']
+    targets = []
 
-        except exceptions.RequestException:
-            output[server] = 'Error: Slave is down.'
+    for server in selected_servers:
+        server_data = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
+        targets.append((server_data, payload))
+
+    pool = Pool(len(targets))
+    data = pool.map(send_command, targets)
+    pool.close()
+
+    for response in data:
+        output[response[0]] = response[1]
 
     page = ''
     output_box_css = ''
@@ -602,9 +616,6 @@ def custom_config_execute():
         redirect(url + '/denied')
 
     type = request.forms.get('type')
-    payload = {'command': request.forms.get('command'),
-               'path': request.forms.get('path'),
-               'type': type}
 
     output = {}
     return_output = request.forms.get('output')
@@ -613,15 +624,23 @@ def custom_config_execute():
     if len(selected_servers) == 0:
         output['Error'] = 'No server selected.'
 
-    for server in selected_servers:
-        try:
-            server_info = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
-            address = 'https://{0}:{1}/execute'.format(server_info[1], server_info[2])
-            req = post(address, data=payload, verify=False)
-            output[server] = req.json()['output']
+    targets = []
 
-        except exceptions.RequestException:
-            output[server] = 'Error: Slave is down.'
+    payload = {'command': request.forms.get('command'),
+               'path': request.forms.get('path'),
+               'type': type}
+
+    for server in selected_servers:
+        server_data = db.execute("SELECT * FROM servers WHERE name='{0}'".format(server)).fetchall()[0]
+        targets.append((server_data, payload))
+
+    pool = Pool(len(targets))
+    data = pool.map(send_command, targets)
+    pool.close()
+
+    for response in data:
+        output[response[0]] = response[1]
+
 
     page = ''
     output_box_css = ''
