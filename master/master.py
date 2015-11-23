@@ -706,6 +706,10 @@ if __name__ == '__main__':
             os.system("openssl req -new -x509 -keyout master.pem -out master.pem -days"
                       " 365 -nodes -subj '/C=IE/ST=Connaught/L=Galway/CN=Sauerkraut'")
 
+            if not os.path.isfile('master.pem'):
+                quit()
+
+
             print('Generated master.pem x509 certificate')
 
         except:
