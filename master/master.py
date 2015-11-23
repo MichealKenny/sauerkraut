@@ -573,7 +573,7 @@ def quick_config_execute():
     output_box_css = ''
 
     if payload['type'] == 'non-blocking':
-        output_box_css = 'border: 1px solid gray;padding-left: 25px;'
+        output_box_css = 'border: 1px solid gray;padding-left: 25px;min-height: 300px;'
         for item in output:
             page += '<h4>{0}</h4><pre>{1}</pre>'.format(item, output[item])
 
@@ -646,7 +646,7 @@ def custom_config_execute():
     output_box_css = ''
 
     if return_output and type == 'non-blocking':
-        output_box_css = 'border: 1px solid gray;padding-left: 25px;'
+        output_box_css = 'border: 1px solid gray;padding-left: 25px;min-height: 300px;'
         for item in output:
             page += '<h4>{0}</h4><pre>{1}</pre>'.format(item, output[item])
 
