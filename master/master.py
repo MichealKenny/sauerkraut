@@ -125,6 +125,10 @@ def auth():
     username = request.forms.get('username').lower()
     password = request.forms.get('password')
 
+    #This prevents SQL Injection.
+    if set('[ ~!#$@%^&*()+{}":;\']+$').intersection(username):
+        redirect(url + '/login#invalid-login')
+
     #Get data from db.
     try:
         entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(username)).fetchall()[0]
