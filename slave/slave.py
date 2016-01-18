@@ -88,20 +88,21 @@ def execute():
         return {'error': 'Not Authorized'}
 
 
-class SSLWSGIRefServer(ServerAdapter):
+class SecureAdapter(ServerAdapter):
     def run(self, handler):
         from wsgiref.simple_server import make_server, WSGIRequestHandler
         import ssl
+
         if self.quiet:
             class QuietHandler(WSGIRequestHandler):
-                def log_request(*args, **kw): pass
+                def log_request(*args, **kw):
+                    pass
+
             self.options['handler_class'] = QuietHandler
-        srv = make_server(self.host, self.port, handler, **self.options)
-        srv.socket = ssl.wrap_socket (
-         srv.socket,
-         certfile='slave.pem',  # path to certificate
-         server_side=True)
-        srv.serve_forever()
+
+        ssl_server = make_server(self.host, self.port, handler, **self.options)
+        ssl_server.socket = ssl.wrap_socket(ssl_server.socket, certfile='slave.pem', server_side=True)
+        ssl_server.serve_forever()
 
 if __name__ == '__main__':
     print('Sauerkraut Slave')
@@ -153,5 +154,4 @@ if __name__ == '__main__':
     except:
         port = config['port']
 
-    srv = SSLWSGIRefServer(host=host, port=port)
-    run(server=srv)
+    run(server=SecureAdapter, host=host, port=port)

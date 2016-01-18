@@ -683,21 +683,21 @@ def js(name):
     return static_file(name, root='js/', mimetype='text/javascript')
 
 
-class SSLWSGIRefServer(ServerAdapter):
+class SecureAdapter(ServerAdapter):
     def run(self, handler):
         from wsgiref.simple_server import make_server, WSGIRequestHandler
         import ssl
+
         if self.quiet:
             class QuietHandler(WSGIRequestHandler):
-                def log_request(*args, **kw): pass
-            self.options['handler_class'] = QuietHandler
-        srv = make_server(self.host, self.port, handler, **self.options)
-        srv.socket = ssl.wrap_socket (
-         srv.socket,
-         certfile='master.pem',  # path to certificate
-         server_side=True)
-        srv.serve_forever()
+                def log_request(*args, **kw):
+                    pass
 
+            self.options['handler_class'] = QuietHandler
+
+        ssl_server = make_server(self.host, self.port, handler, **self.options)
+        ssl_server.socket = ssl.wrap_socket(ssl_server.socket, certfile='master.pem', server_side=True)
+        ssl_server.serve_forever()
 
 if __name__ == '__main__':
     print('Sauerkraut - Cluster Administration Tool')
@@ -788,8 +788,11 @@ if __name__ == '__main__':
     url = 'https://{0}:{1}'.format(ext, str(port))
 
     print('https://{0}:{1}/'.format(host, port))
-    packages.urllib3.disable_warnings()
 
+    try:
+        packages.urllib3.disable_warnings()
 
-    srv = SSLWSGIRefServer(host=host, port=port)
-    run(server=srv)
+    except:
+        pass
+
+    run(server=SecureAdapter, host=host, port=port)
