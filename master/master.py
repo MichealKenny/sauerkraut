@@ -495,6 +495,9 @@ def quick_config():
 
     servers = db.execute('SELECT * FROM servers').fetchall()
 
+    if len(servers) == 0:
+        redirect(url + '/add#no-servers')
+
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
@@ -604,6 +607,9 @@ def custom_config():
     options = ''
 
     servers = db.execute('SELECT * FROM servers').fetchall()
+
+    if len(servers) == 0:
+        redirect(url + '/add#no-servers')
 
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
