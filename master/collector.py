@@ -51,6 +51,16 @@ if __name__ == '__main__':
 
 
         trim_logs(int(len(servers)) * 17000)
-        logs_db.commit()
+
+        committed = False
+
+        while not committed:
+            try:
+                logs_db.commit()
+                committed = True
+
+            except:
+                sleep(0.3)
+
         sleep(5)
 

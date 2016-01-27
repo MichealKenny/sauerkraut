@@ -2,7 +2,7 @@ from bottle import ServerAdapter, route, run, static_file, request, response, re
 from requests import get, post, exceptions, packages
 from multiprocessing.dummy import Pool
 from socket import gethostbyname
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib, uuid
 import sqlite3
 import json
@@ -182,10 +182,52 @@ def index():
         green = 0
         yellow = 0
         red = 0
+        page = []
 
-        pool = Pool(len(servers))
-        page = pool.map(get_server_status, servers)
-        pool.close()
+        # TODO: Clean up this block.
+        for server in servers:
+            latest_log = log.execute("SELECT * FROM servers WHERE name = '{0}' ORDER BY time DESC".format(server[0])).fetchone()
+
+            if datetime.strptime(latest_log[0], "%Y-%m-%d %H:%M:%S") > datetime.utcnow() + timedelta(seconds=-30):
+                if latest_log[2:8] == ('0', '0', '0', '0', '0', '0'):
+                    page.append('<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}'
+                                '</td><td>N/A</td><td>N/A</td><td><img src="images/red.png"></td><td>'
+                                '<a onclick="return confirm(\'Are you sure you want to remove this server?\')" href='
+                                '"remove-server?server={name}">X</a></td></tr>'.format(name=server[0],
+                                                                                       host=server[1],
+                                                                                       port=server[2]))
+
+                    red += 1
+
+                elif float(latest_log[2]) > 85 or float(latest_log[3]) > 85:
+                    page.append('<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td>'
+                                '<td>{cpu}%</td><td>{ram}%</td><td><img src="images/{icon}"></td><td>'
+                                '<a onclick="return confirm(\'Are you sure you want to remove this server?\')" href='
+                                '"remove-server?server={name}">X</a></td></tr>'.format(name=server[0],
+                                                                                         host=server[1],
+                                                                                         port=server[2],
+                                                                                         cpu=latest_log[2],
+                                                                                         ram=latest_log[3],
+                                                                                         icon='yellow.png'))
+                    yellow += 1
+
+                else:
+                    page.append('<tr><td><a href="server?server={name}">{name}</a></td><td>{host}:{port}</td>'
+                                '<td>{cpu}%</td><td>{ram}%</td><td><img src="images/{icon}"></td><td>'
+                                '<a onclick="return confirm(\'Are you sure you want to remove this server?\')" href='
+                                '"remove-server?server={name}">X</a></td></tr>'''.format(name=server[0],
+                                                                                         host=server[1],
+                                                                                         port=server[2],
+                                                                                         cpu=latest_log[2],
+                                                                                         ram=latest_log[3],
+                                                                                         icon='green.png'))
+                    green += 1
+
+
+            else:
+                pool = Pool(len(servers))
+                page = pool.map(get_server_status, servers)
+                pool.close()
 
     return template(html, {'body': ''.join(page), 'username':current_user(), 'green': green, 'yellow': yellow, 'red': red})
 
@@ -666,6 +708,28 @@ def custom_config_execute():
                     output_box_css=output_box_css)
 
 
+# TODO: API Work in progress.
+# @route('/api/servers')
+# def api_list_servers():
+#     return_dict = {}
+#     servers = db.execute('SELECT * FROM servers').fetchall()
+#
+#     for server in servers:
+#         return_dict[server[0]] = {'host': server[1], 'port': server[2]}
+#
+#     return return_dict
+#
+#
+# @route('/api/server-status')
+# def api_server_status():
+#     name = request.query.server
+#     server = db.execute('SELECT * FROM servers WHERE name = "{0}"'.format(name)).fetchall()[0]
+#     try:
+#         health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.4, verify=False).json()
+#         return {name: {'cpu': health['cpu'], 'ram': health['ram']}}
+#
+#     except:
+#         return {name: {'cpu': None, 'ram': None}}
 
 
 @route('/images/<name>')
