@@ -7,6 +7,12 @@ import os
 
 
 def authorized():
+    """
+    Check if the request is from the master server.
+
+    :return: True or False.
+    """
+
     if master_ip:
         if request.remote_addr == master_ip:
             return True
@@ -17,12 +23,26 @@ def authorized():
     else:
         return True
 
+
 @route('/')
 def index():
+    """
+    Return that this is a Sauerkraut Slave.
+
+    :return: Text.
+    """
+
     return 'Sauerkraut Slave'
+
 
 @route('/status')
 def status():
+    """
+    Get data on the CPU and RAM.
+
+    :return: JSON, CPU & RAM.
+    """
+
     if authorized():
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
@@ -32,8 +52,15 @@ def status():
     else:
         return {'error': 'Not Authorized'}
 
+
 @route('/extended')
 def extended():
+    """
+    Get data on the CPU, RAM, Disk Usage, Disk Read, Disk Write, & Total Packets.
+
+    :return: JSON, CPU, RAM, Disk Usage, Disk Read, Disk Write, & Total Packets.
+    """
+
     if authorized():
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
@@ -52,6 +79,12 @@ def extended():
 
 @route('/execute', method='POST')
 def execute():
+    """
+    Get the payload data, perform a number of checks and execute the command.
+
+    :return: JSON, Command output.
+    """
+
     if authorized():
         command = request.forms.get('command')
         path = request.forms.get('path')

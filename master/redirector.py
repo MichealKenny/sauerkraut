@@ -5,10 +5,24 @@ from json import loads
 
 @route('/')
 def redirector():
+    """
+    Redirect to the HTTPS endpoint.
+
+    :return: Nothing.
+    """
+
     redirect('https://{0}:{1}/'.format(config['url'], config['port']))
+
 
 @route('/<path:path>')
 def redirector(path):
+    """
+    Redirect to the HTTPS endpoint with the given path.
+
+    :param path: Given path.
+    :return: Nothing.
+    """
+
     redirect('https://{0}:{1}/{2}'.format(config['url'], config['port'], path))
 
 if __name__ == '__main__':

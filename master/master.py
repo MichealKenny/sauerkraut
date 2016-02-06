@@ -10,6 +10,12 @@ import os
 
 
 def authorized():
+    """
+    Function to check if the user has a valid Sauerkraut cookie.
+
+    :return: True or False.
+    """
+
     cookie = request.get_cookie('sauerkraut', secret=secret)
 
     if cookie:
@@ -23,7 +29,14 @@ def authorized():
     else:
         return False
 
+
 def admin():
+    """
+    Function to check if the user has admin permissions or not.
+
+    :return: True or False.
+    """
+
     entry = db.execute("SELECT * FROM accounts WHERE username = '{0}'".format(current_user())).fetchall()[0]
 
     if entry[3] == 'admin':
@@ -32,13 +45,28 @@ def admin():
     else:
         return False
 
+
 def current_user():
+    """
+    Function to get the current logged in user from the cookie.
+
+    :return: The currently logged in user.
+    """
+
     sk = json.loads(request.get_cookie('sauerkraut', secret=secret))
 
     return sk['username']
 
 
 def create_hash(password, salt=uuid.uuid4().hex):
+    """
+    Function to both create a hash and a salt given a password,
+    or optionally provide your own salt for hash checking.
+
+    :param password: The given password.
+    :param salt: Either the given salt, or a generated one.
+    :return: The generate password and salt.
+    """
 
     hash_pass = hashlib.sha512((password + salt).encode('utf-8')).hexdigest()
 
@@ -46,6 +74,13 @@ def create_hash(password, salt=uuid.uuid4().hex):
 
 
 def get_server_status(server):
+    """
+    Function to get the json data from the /status api of the given server and format it into a HTML row.
+
+    :param server: A list of information about the server, gotten from the database.
+    :return: Formatted HTML row for that server.
+    """
+
     global green
     global yellow
     global red
@@ -90,6 +125,13 @@ def get_server_status(server):
 
 
 def send_command(data):
+    """
+    Function to send the given data to the /execute endpoint of the given server.
+
+    :param data: A combination of the server information and the payload to send.
+    :return: Either the output of the executed command or an error message.
+    """
+
     server, payload = data
 
     try:
@@ -103,15 +145,26 @@ def send_command(data):
 
 @route('/login')
 def login():
+    """
+    Login page.
+
+    :return: The HTML for the login page.
+    """
+
     if authorized():
         redirect(url + '/')
-
 
     return open('html/login.html', 'r').read()
 
 
 @route('/logout')
 def logout():
+    """
+    Erases the Sauerkraut cookie and redirect to /login.
+
+    :return: Nothing.
+    """
+
     log.execute("INSERT INTO events VALUES ('User {0} logged out','Logout','{0}','{1}')"
         .format(current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
     logs_db.commit()
@@ -122,6 +175,13 @@ def logout():
 
 @route('/auth', method='POST')
 def auth():
+    """
+    Checks the given password and username and if they match an entry in the database,
+    set the Sauerkraut cookie and redirect the user to /.
+
+    :return: Nothing
+    """
+
     username = request.forms.get('username').lower()
     password = request.forms.get('password')
 
@@ -165,6 +225,11 @@ def auth():
 
 @route('/')
 def index():
+    """
+    Gets all the servers and gets their current status, then format it correctly.
+
+    :return: Formatted HTML page with the list of servers and their status.
+    """
     global green
     global yellow
     global red
@@ -192,6 +257,12 @@ def index():
 
 @route('/add')
 def add_page():
+    """
+    Page for adding a server at /add.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -204,6 +275,12 @@ def add_page():
 
 @route('/add', method='POST')
 def add_server():
+    """
+    Given the form data perform a number of checks and if all pass, add server to the database.
+
+    :return: Nothing.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -245,6 +322,12 @@ def add_server():
 
 @route('/remove-server')
 def remove_server():
+    """
+    Removes the given server from the database.
+
+    :return: Nothing.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -264,6 +347,12 @@ def remove_server():
 
 @route('/server')
 def server():
+    """
+    Format the graphs for the given server, then return the formatted HTML.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -327,6 +416,12 @@ def server():
 
 @route('/manage')
 def manage():
+    """
+    Page for /manage, gets all users in the database and formats the HTML.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -343,6 +438,12 @@ def manage():
 
 @route('/manage/change-password')
 def change_password_page():
+    """
+    Change password page.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -350,6 +451,12 @@ def change_password_page():
 
 @route('/manage/change-password', method='POST')
 def change_password():
+    """
+    Given the data from the form, perform a number of checks and if they pass, change the password.
+
+    :return: Nothing.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -380,6 +487,12 @@ def change_password():
 
 @route('/manage/new-user')
 def new_user_page():
+    """
+    New user page.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -392,6 +505,12 @@ def new_user_page():
 
 @route('/manage/new-user', method='POST')
 def new_user():
+    """
+    Given the for data, perform a number of checks and if they pass, add user to the database.
+
+    :return: Nothing.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -435,6 +554,12 @@ def new_user():
 
 @route('/remove-user')
 def remove_user():
+    """
+    Performs checks, and removes the given user from the database.
+
+    :return: Nothing.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -462,12 +587,24 @@ def remove_user():
 
 @route('/denied')
 def denied():
+    """
+    Access denied page.
+
+    :return: Formatted HTML.
+    """
+
     response.status = 401
     return '<h2>401 Unauthorized</h2><p>You lack the required permission to perform this action<p>'
 
 
 @route('/manage/event-viewer')
 def event_viewer():
+    """
+    Get all of the logged events from the database and format them in the HTML.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -484,6 +621,12 @@ def event_viewer():
 
 @route('/quick-config')
 def quick_config():
+    """
+    Quick config page.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -506,6 +649,12 @@ def quick_config():
 
 @route('/quick-config', method='POST')
 def quick_config_execute():
+    """
+    Given the form data, perform checks, and send the payload to the selected servers.
+
+    :return: Formatted HTML with the command output.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -597,6 +746,12 @@ def quick_config_execute():
 
 @route('/custom-config')
 def custom_config():
+    """
+    Custom config page.
+
+    :return: Formatted HTML.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -619,6 +774,12 @@ def custom_config():
 
 @route('/custom-config', method='POST')
 def custom_config_execute():
+    """
+    Given the form data, perform checks, and send the payload to the selected servers.
+
+    :return: Formatted HTML with the command output.
+    """
+
     if not authorized():
         redirect(url + '/login')
 
@@ -698,16 +859,37 @@ def custom_config_execute():
 
 @route('/images/<name>')
 def images(name):
+    """
+    Provide /images directory access to the web.
+
+    :param name: Name of the file.
+    :return: The file.
+    """
+
     return static_file(name, root='images/')
 
 
 @route('/css/<name>')
 def css(name):
+    """
+    Provide /css directory access to the web.
+
+    :param name: Name of the file.
+    :return: The file.
+    """
+
     return static_file(name, root='css/', mimetype='text/css')
 
 
 @route('/js/<name>')
 def js(name):
+    """
+    Provide /js directory access to the web.
+
+    :param name: Name of the file.
+    :return: The file.
+    """
+
     return static_file(name, root='js/', mimetype='text/javascript')
 
 

@@ -6,6 +6,13 @@ import sqlite3
 
 
 def trim_logs(length):
+    """
+    Trim the oldest entries from the database.
+
+    :param length: Max length of the database.
+    :return: Nothing.
+    """
+
     log.execute("DELETE FROM servers WHERE ROWID IN (SELECT ROWID FROM servers ORDER BY"
                 " ROWID DESC LIMIT -1 OFFSET {0})".format(length))
 
@@ -14,6 +21,13 @@ def trim_logs(length):
 
 
 def get_server_status(server):
+    """
+    Check the /extended endpoint of the given server and return the data.
+
+    :param server: List of data on the given server.
+    :return: Server name, and a dictonary of the server health.
+    """
+
     try:
         health = get('https://{host}:{port}/extended'.format(host=server[1], port=server[2]), timeout=0.4, verify=False).json()
 
