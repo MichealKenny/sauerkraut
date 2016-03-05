@@ -16,7 +16,7 @@ def authorized():
     :return: True or False.
     """
 
-    cookie = request.get_cookie('sauerkraut', secret=secret)
+    cookie = request.get_cookie(cookie_name, secret=secret)
 
     if cookie:
         sk = json.loads(cookie)
@@ -53,7 +53,7 @@ def current_user():
     :return: The currently logged in user.
     """
 
-    sk = json.loads(request.get_cookie('sauerkraut', secret=secret))
+    sk = json.loads(request.get_cookie(cookie_name, secret=secret))
 
     return sk['username']
 
@@ -169,7 +169,7 @@ def logout():
         .format(current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
     logs_db.commit()
 
-    response.set_cookie('sauerkraut', '', secret=secret, expires=0)
+    response.set_cookie(cookie_name, '', secret=secret, expires=0)
     redirect(url + '/login')
 
 
@@ -201,7 +201,7 @@ def auth():
 
     if create_hash(password, entry[2])[0] == entry[1]:
         data = json.dumps({'username': username, 'key': key})
-        response.set_cookie(name='sauerkraut', value=data, secret=secret, secure=True)
+        response.set_cookie(name=cookie_name, value=data, secret=secret, secure=True)
 
         last = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         db.execute("UPDATE accounts SET last='{0}' WHERE username='{1}'".format(last, username))
@@ -989,6 +989,7 @@ if __name__ == '__main__':
     config = json.loads(config_file.read())
     config_file.close()
 
+    cookie_name = '_sauerkraut-' + uuid.uuid4().hex[:5]
     secret = config['secret']
     key = config['key']
     host = gethostbyname(config['host'])
