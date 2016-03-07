@@ -154,6 +154,7 @@ def login():
     if authorized():
         redirect(url + '/')
 
+    response.set_header('Strict-Transport-Security', 'max-age=31536000')
     return open('html/login.html', 'r').read()
 
 
