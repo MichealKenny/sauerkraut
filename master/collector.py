@@ -53,7 +53,13 @@ if __name__ == '__main__':
     print('Collecting..')
     while True:
         servers = db.execute("SELECT * FROM servers").fetchall()
-        pool = Pool(len(servers))
+        if len(servers) == 0:
+            processes = 1
+        
+        else:
+            processes = len(servers)
+
+        pool = Pool(processes)
         statuses = pool.map(get_server_status, servers)
         pool.close()
 

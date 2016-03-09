@@ -24,6 +24,17 @@ body {
     overflow-y: auto;
 }
 
+.sidebar_info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 150px;
+    border-top: 2px solid;
+    border-color: #efefef;
+    font-size: 70%;
+    color: #8a8a8a;
+}
+
 .body {
     position: absolute;
     top: 40px;

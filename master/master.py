@@ -253,7 +253,8 @@ def index():
         page = pool.map(get_server_status, servers)
         pool.close()
 
-    return template(html, {'body': ''.join(page), 'username': current_user(), 'green': green, 'yellow': yellow, 'red': red})
+    return template(html, {'body': ''.join(page), 'username': current_user(), 'version': version,
+                           'green': green, 'yellow': yellow, 'red': red})
 
 
 @route('/add')
@@ -271,7 +272,7 @@ def add_page():
         redirect(url + '/denied')
 
     html = open('html/add.html', 'r').read()
-    return template(html, username=current_user())
+    return template(html, username=current_user(), version=version)
 
 
 @route('/add', method='POST')
@@ -407,9 +408,10 @@ def server():
         disk_write_data = disk_write_data[:-1] + ']'
         total_packets_data = total_packets_data[:-1] + ']'
 
-        return template(html, {'name': name, 'username': current_user(), 'labels': labels, 'cpu_data': cpu_data,
-                               'ram_data': ram_data, 'disk_data': disk_data, 'disk_read_data': disk_read_data,
-                               'disk_write_data': disk_write_data, 'total_packets_data': total_packets_data})
+        return template(html, {'name': name, 'username': current_user(), 'version': version, 'labels': labels,
+                               'cpu_data': cpu_data, 'ram_data': ram_data, 'disk_data': disk_data,
+                               'disk_read_data': disk_read_data, 'disk_write_data': disk_write_data,
+                               'total_packets_data': total_packets_data})
 
     except exceptions.RequestException:
         return 'Server down.'
@@ -435,7 +437,7 @@ def manage():
             .format(name=entry[0], perms=entry[3], last=entry[4])
 
     html = open('html/manage.html', 'r').read()
-    return template(html, username=current_user(), table=table)
+    return template(html, username=current_user(), version=version, table=table)
 
 @route('/manage/change-password')
 def change_password_page():
@@ -448,7 +450,7 @@ def change_password_page():
     if not authorized():
         redirect(url + '/login')
 
-    return template(open('html/change-password.html', 'r').read(), username=current_user())
+    return template(open('html/change-password.html', 'r').read(), username=current_user(), version=version)
 
 @route('/manage/change-password', method='POST')
 def change_password():
@@ -501,7 +503,7 @@ def new_user_page():
         redirect(url + '/denied')
 
     html = open('html/new-user.html', 'r').read()
-    return template(html, username=current_user())
+    return template(html, username=current_user(), version=version)
 
 
 @route('/manage/new-user', method='POST')
@@ -617,7 +619,7 @@ def event_viewer():
         page += '<tr><td>{0}</a></td><td>{1}</td><td>{2}</td><td>{3}</td></tr>'\
             .format(event[0], event[1], event[2], event[3])
 
-    return template(html, body=page, username=current_user())
+    return template(html, body=page, username=current_user(), version=version)
 
 
 @route('/quick-config')
@@ -645,7 +647,7 @@ def quick_config():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, username=current_user(), options=options, output_box_css='', output='')
+    return template(html, username=current_user(), version=version, options=options, output_box_css='', output='')
 
 
 @route('/quick-config', method='POST')
@@ -742,7 +744,8 @@ def quick_config_execute():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, username=current_user(), options=options, output=page, output_box_css=output_box_css)
+    return template(html, username=current_user(), version=version, options=options,
+                    output=page, output_box_css=output_box_css)
 
 
 @route('/custom-config')
@@ -770,7 +773,7 @@ def custom_config():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, options=options, username=current_user(), output='', output_box_css='')
+    return template(html, options=options, username=current_user(), version=version, output='', output_box_css='')
 
 
 @route('/custom-config', method='POST')
@@ -830,7 +833,7 @@ def custom_config_execute():
     for server in servers:
         options += '<option value="{name}">{name}</option>'.format(name=server[0])
 
-    return template(html, options=options, username=current_user(), output=page,
+    return template(html, options=options, username=current_user(), version=version, output=page,
                     output_box_css=output_box_css)
 
 
@@ -995,6 +998,7 @@ if __name__ == '__main__':
     config = json.loads(config_file.read())
     config_file.close()
 
+    version = 'Sauerkraut v1.2.2'
     cookie_name = '_sauerkraut-' + uuid.uuid4().hex[:5]
     secret = config['secret']
     key = config['key']
