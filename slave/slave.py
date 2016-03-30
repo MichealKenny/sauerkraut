@@ -123,7 +123,8 @@ def execute():
 
 class SecureAdapter(ServerAdapter):
     def run(self, handler):
-        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        from wsgiref.simple_server import make_server, WSGIRequestHandler, WSGIServer
+        from socketserver import ThreadingMixIn
         import ssl
 
         if self.quiet:
@@ -133,12 +134,13 @@ class SecureAdapter(ServerAdapter):
 
             self.options['handler_class'] = QuietHandler
 
-        #Setup SSL context for 'A' rating from Qualys SSL Labs.
+        #Setup SSL context for 'A+' rating from Qualys SSL Labs.
         context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
         context.load_cert_chain(certfile='slave.pem')
         context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
 
-        ssl_server = make_server(self.host, self.port, handler, **self.options)
+        class ThreadAdapter(ThreadingMixIn, WSGIServer): pass
+        ssl_server = make_server(self.host, self.port, handler, server_class=ThreadAdapter, **self.options)
         ssl_server.socket = context.wrap_socket(ssl_server.socket, server_side=True)
         ssl_server.serve_forever()
 

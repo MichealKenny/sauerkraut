@@ -702,7 +702,7 @@ def quick_config_execute():
                    'type': 'blocking'}
 
     elif config == 'list-cronjobs':
-        payload = {'command': 'cat /etc/crontab',
+        payload = {'command': 'crontab -l',
                    'path': None,
                    'type': 'non-blocking'}
 
@@ -837,30 +837,6 @@ def custom_config_execute():
                     output_box_css=output_box_css)
 
 
-# TODO: API Work in progress.
-# @route('/api/servers')
-# def api_list_servers():
-#     return_dict = {}
-#     servers = db.execute('SELECT * FROM servers').fetchall()
-#
-#     for server in servers:
-#         return_dict[server[0]] = {'host': server[1], 'port': server[2]}
-#
-#     return return_dict
-#
-#
-# @route('/api/server-status')
-# def api_server_status():
-#     name = request.query.server
-#     server = db.execute('SELECT * FROM servers WHERE name = "{0}"'.format(name)).fetchall()[0]
-#     try:
-#         health = get('https://{host}:{port}/status'.format(host=server[1], port=server[2]), timeout=0.4, verify=False).json()
-#         return {name: {'cpu': health['cpu'], 'ram': health['ram']}}
-#
-#     except:
-#         return {name: {'cpu': None, 'ram': None}}
-
-
 @route('/images/<name>')
 def images(name):
     """
@@ -899,7 +875,8 @@ def js(name):
 
 class SecureAdapter(ServerAdapter):
     def run(self, handler):
-        from wsgiref.simple_server import make_server, WSGIRequestHandler
+        from wsgiref.simple_server import make_server, WSGIRequestHandler, WSGIServer
+        from socketserver import ThreadingMixIn
         import ssl
 
         if self.quiet:
@@ -909,12 +886,13 @@ class SecureAdapter(ServerAdapter):
 
             self.options['handler_class'] = QuietHandler
 
-        #Setup SSL context for 'A' rating from Qualys SSL Labs.
+        #Setup SSL context for 'A+' rating from Qualys SSL Labs.
         context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
         context.load_cert_chain(certfile='master.pem')
         context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
 
-        ssl_server = make_server(self.host, self.port, handler, **self.options)
+        class ThreadAdapter(ThreadingMixIn, WSGIServer): pass
+        ssl_server = make_server(self.host, self.port, handler, server_class=ThreadAdapter, **self.options)
         ssl_server.socket = context.wrap_socket(ssl_server.socket, server_side=True)
         ssl_server.serve_forever()
 
