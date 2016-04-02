@@ -323,11 +323,13 @@ def add_server():
 
 @route('/export-servers')
 def export_servers():
+    """
+    Converts the list of servers to JSON or CSV.
+
+    :return: JSON or CSV
+    """
     if not authorized():
         redirect(url + '/login')
-
-    if not admin():
-        redirect(url + '/denied')
 
     format = request.query.format or 'json'
     servers = db.execute('SELECT * FROM servers').fetchall()
@@ -361,8 +363,14 @@ def export_servers():
     else:
         redirect(url + '/')
 
+
 @route('/import', method='POST')
 def import_servers():
+    """
+    Parses the given list of servers and adds them to the database.
+
+    :return: Nothing.
+    """
     if not authorized():
         redirect(url + '/login')
 
@@ -375,22 +383,26 @@ def import_servers():
         redirect(url + '/add#no-file')
 
     try:
-        import_json = json.loads(import_file.file.read().decode())
+        import_json = json.loads(import_file.file.read().decode())['servers']
 
     except:
         redirect(url + '/add#invalid-format')
 
-    validate = request.forms.get('validate')
+    validate = request.forms.get('validate-import')
 
-    for item in import_json['servers']:
-        name, host, port = item['name'], item['host'], item['port']
+    for item in import_json:
+        try:
+            name, host, port = item['name'], item['host'], item['port']
+
+        except:
+            redirect(url + '/add#invalid-format')
 
         if validate:
             try:
-                get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
+                get('https://{host}:{port}/status'.format(host=host, port=port), verify=False, timeout=0.8)
 
             except:
-                redirect(url + '/add#invalid-server')
+                continue
 
         if len(name) < 4:
             redirect(url + '/add#invalid-name')
@@ -411,6 +423,7 @@ def import_servers():
         logs_db.commit()
 
     redirect(url + '/')
+
 
 @route('/remove-server')
 def remove_server():
@@ -1066,7 +1079,7 @@ if __name__ == '__main__':
     config = json.loads(config_file.read())
     config_file.close()
 
-    version = 'Sauerkraut v1.2.2'
+    version = 'Sauerkraut v1.2.4'
     cookie_name = '_sauerkraut-' + uuid.uuid4().hex[:5]
     secret = config['secret']
     key = config['key']

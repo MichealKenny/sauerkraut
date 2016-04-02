@@ -29,7 +29,7 @@
             <input type="text" name="host" placeholder="Domain/IP" style="width: 250px;"><br><br>
              <input type="text" name="port" placeholder="Port" style="width: 250px;"><br><br>
              <div align="center" style="width: 250px">
-             <input type="checkbox" name="validate" checked> Validate
+             <input type="checkbox" name="validate" checked> <span title="Have Sauerkraut check if the server is up and if it is a Sauerkraut slave">Validate</span>
                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <input type="submit" value="Add Server">
             </div>
@@ -37,8 +37,11 @@
         <br>
         <h3>Import Servers:</h3>
         <form action="/import" method="post" enctype="multipart/form-data">
-            <input type="file" accept=".json" name="upload" />
-            <br><input type="submit" value="Import Servers" />
+            <div align="center" style="width: 250px">
+            <input type="file" accept=".json" name="upload" /><br><br>
+            <input type="checkbox" name="validate-import" checked> <span title="If a server is down, don't add it.">Validate</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="submit" value="Import Servers" /></div>
         </form>
         <div class="error notification" id="invalid-server" align="center">The given server is either down or is not running the Sauerkraut slave software.</div>
         <div class="error notification" id="no-servers" align="center">There are no slaves in the database, please add a Sauerkraut slave.</div>
