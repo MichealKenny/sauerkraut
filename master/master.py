@@ -1079,7 +1079,7 @@ if __name__ == '__main__':
     config = json.loads(config_file.read())
     config_file.close()
 
-    version = 'Sauerkraut v1.2.4'
+    version = 'Sauerkraut v1.2.5'
     cookie_name = '_sauerkraut-' + uuid.uuid4().hex[:5]
     secret = config['secret']
     key = config['key']
