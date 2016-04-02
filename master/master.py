@@ -282,7 +282,6 @@ def add_server():
 
     :return: Nothing.
     """
-
     if not authorized():
         redirect(url + '/login')
 
@@ -321,6 +320,97 @@ def add_server():
 
     redirect(url + '/')
 
+
+@route('/export-servers')
+def export_servers():
+    if not authorized():
+        redirect(url + '/login')
+
+    if not admin():
+        redirect(url + '/denied')
+
+    format = request.query.format or 'json'
+    servers = db.execute('SELECT * FROM servers').fetchall()
+
+    if len(servers) == 0:
+        redirect(url + '/add#no-servers')
+
+    if format == 'json':
+        exported_servers = []
+        for server in servers:
+            name, host, port = server
+            exported_servers.append({'name': name, 'host': host, 'port': int(port)})
+
+        response.headers['Content-Disposition'] = 'attachment; filename="{0}.json"'.format(cookie_name[1:].replace('_', '-'))
+        response.headers['Content-Type'] = ' application/json; charset=UTF-8'
+
+        return json.dumps({'servers': exported_servers}, indent=4)
+
+    elif format == 'csv':
+        csv = ''
+
+        for server in servers:
+            name, host, port = server
+            csv += '{0},{1},{2}\n'.format(name, host, port)
+
+        response.headers['Content-Disposition'] = 'attachment; filename="{0}.csv"'.format(cookie_name[1:].replace('_', '-'))
+        response.headers['Content-Type'] = ' text/csv; charset=UTF-8'
+
+        return csv
+
+    else:
+        redirect(url + '/')
+
+@route('/import', method='POST')
+def import_servers():
+    if not authorized():
+        redirect(url + '/login')
+
+    if not admin():
+        redirect(url + '/denied')
+
+    import_file = request.files.get('upload')
+
+    if not import_file:
+        redirect(url + '/add#no-file')
+
+    try:
+        import_json = json.loads(import_file.file.read().decode())
+
+    except:
+        redirect(url + '/add#invalid-format')
+
+    validate = request.forms.get('validate')
+
+    for item in import_json['servers']:
+        name, host, port = item['name'], item['host'], item['port']
+
+        if validate:
+            try:
+                get('https://{host}:{port}/status'.format(host=host, port=port), verify=False)
+
+            except:
+                redirect(url + '/add#invalid-server')
+
+        if len(name) < 4:
+            redirect(url + '/add#invalid-name')
+
+        if set('[ ~!#$@%^&*()+{}":;\']+$').intersection(name):
+            redirect(url + '/add#invalid-name')
+
+        exists = db.execute("SELECT name FROM servers WHERE name = '{0}'".format(name)).fetchall()
+        if exists:
+            redirect(url + '/add#name-exists')
+
+        #Add server to databases.
+        db.execute("INSERT INTO servers VALUES ('{0}','{1}','{2}')".format(name, host, port))
+        master_db.commit()
+
+        log.execute("INSERT INTO events VALUES ('Server {0} added','Server Added','{1}','{2}')"
+                    .format(name, current_user(), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")))
+        logs_db.commit()
+
+    redirect(url + '/')
 
 @route('/remove-server')
 def remove_server():

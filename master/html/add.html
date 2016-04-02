@@ -34,10 +34,18 @@
             <input type="submit" value="Add Server">
             </div>
          </form>
+        <br>
+        <h3>Import Servers:</h3>
+        <form action="/import" method="post" enctype="multipart/form-data">
+            <input type="file" accept=".json" name="upload" />
+            <br><input type="submit" value="Import Servers" />
+        </form>
         <div class="error notification" id="invalid-server" align="center">The given server is either down or is not running the Sauerkraut slave software.</div>
         <div class="error notification" id="no-servers" align="center">There are no slaves in the database, please add a Sauerkraut slave.</div>
         <div class="error notification" id="name-exists" align="center">That server name is already taken in the database, please choose another.</div>
         <div class="error notification" id="invalid-name" align="center">That server name is invalid, server names must be at least 4 characters long and cannot contain special characters or spaces.</div>
+        <div class="error notification" id="no-file" align="center">No file was given, please click "Browse..." and select a JSON file in the correct Sauerkraut format.</div>
+        <div class="error notification" id="invalid-format" align="center">The given file is not in the correct Sauerkraut JSON format.</div>
     </div>
 </body>
 </html>

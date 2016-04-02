@@ -16,7 +16,7 @@
         <a href="/logout" style="position: absolute; right: 15px; top: 14px; font-size: 12px;">Logout</a>
         <a href="/manage" style="position: absolute; right: 65px; top: 14px; font-size: 12px;">Manage</a>
     </div>
-    <div style="position: absolute;width: 140px; top: 250px; font-size: 11px;" align="center">
+    <div style="position: absolute;width: 135px; top: 250px; font-size: 11px;" align="center">
         <p>Healthy Servers: {{green}}</p>
         <p>Unhealthy Servers: {{yellow}}</p>
         <p>Servers Down: {{red}}</p>
@@ -34,6 +34,9 @@
     <div class="sidebar_info" align="center"><h3>{{version}}</h3></div>
     <div class="body">
         <h3>List of Servers</h3>
+        <div style="position: absolute;right:6%;top:25px;">
+            Export: [<a href="/export-servers?format=json">JSON</a>|<a href="export-servers?format=csv">CSV</a>]
+        </div>
         <input type="text" id="search" style="width: 95%;box-sizing: border-box;" placeholder="Filter Servers">
         <table id="table" style="width:95%;text-align: center;" class="sortable">
             <thead>
